@@ -552,7 +552,9 @@
             window.pairedCards = [];
           }
           const selectedArray = Array.from(selectedCards);
-          window.pairedCards.push([selectedArray[0].id, selectedArray[1].id]);
+          const checksum1 = selectedArray[0].id;
+          const checksum2 = selectedArray[1].id;
+          window.pairedCards.push([checksum1, checksum2]);
           console.log(window.pairedCards);
           const pairedCard = document.createElement('div');
           pairedCard.className = 'video-card paired';
@@ -644,7 +646,7 @@
           selectedCards.clear();
           pairButton.disabled = true;
           pairButton.style.display = 'none';
-          await audioAlign(selectedArray[0].id, selectedArray[1].id);
+          await audioAlign(checksum1, checksum2);
 
           // Add upload button after alignment is complete
           const uploadButton = document.createElement('button');
@@ -691,25 +693,20 @@
           `;
 
           playSyncButton.onclick = () => {
-            const video1 = pairedCard.querySelector(
-              `.video-wrapper:first-child video`
-            );
-            const video2 = pairedCard.querySelector(
-              `.video-wrapper:last-child video`
-            );
-
-            // Get checksums from video labels
-            const checksum1 = pairedCard
-              .querySelector(`.video-wrapper:first-child .video-label`)
-              .textContent.trim();
-            const checksum2 = pairedCard
-              .querySelector(`.video-wrapper:last-child .video-label`)
-              .textContent.trim();
+            const videos = pairedCard.querySelectorAll('.video-wrapper video');
+            const video1 = videos[0];
+            const video2 = videos[1];
 
             // Get the offset from whichever video has it
             const file1 = getWindowUserFile(checksum1);
             const file2 = getWindowUserFile(checksum2);
             const offset = file1.data.offset || file2.data.offset || 0;
+
+            if (!video1.paused || !video2.paused) {
+              video1.pause();
+              video2.pause();
+              return;
+            }
 
             // Reset both videos
             video1.currentTime = 0;
