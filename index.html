@@ -317,6 +317,8 @@
     <div id="pairedCardsContainer"></div>
 
     <script>
+      const playbackSpeed = 16;
+      const playbackSpeedDown = 1 / playbackSpeed;
       const ctx = new AudioContext();
       const fileInput = document.getElementById('fileInput');
       const uploadBtn = document.getElementById('uploadBtn');
@@ -623,7 +625,7 @@
                 modal.style.display = 'flex';
 
                 // Play both video and audio in sync
-                modalVideo.playbackRate = 1 / 16;
+                modalVideo.playbackRate = playbackSpeedDown;
                 modalVideo.play();
                 modalAudio.play();
               }
@@ -885,7 +887,7 @@
       }
 
       async function processAudio(file, card) {
-        console.log('Processing audio...');
+        console.log('Processing audio...', card.id);
         const audioCtx = new (window.AudioContext ||
           window.webkitAudioContext)();
         const response = await fetch(URL.createObjectURL(file));
@@ -936,7 +938,16 @@
         audio.style.display = 'none';
         card.appendChild(audio);
         const id = card.id;
+        console.log('audio processed!', id);
         updateWindowUserFile({ audioBlob: wavBlob }, id);
+        const fileData = getWindowUserFile(id);
+        if (fileData.data.processedVideoBlob) {
+          const logBox = card.querySelector('.log-box');
+          logBox.className = 'log-box complete';
+          logBox.innerHTML = `
+              <span class="material-icons">check_circle</span>
+              <span>Processing complete!</span>`;
+        }
       }
 
       async function getChecksum(file) {
@@ -1021,15 +1032,17 @@
             console.log('Blob size in MB:', blob.size / 1024 / 1024);
             processedVideo.src = url;
             updateWindowUserFile({ processedVideoBlob: blob }, checksum);
-            processedVideo.playbackRate = 1 / 16;
-            const logBox = card.querySelector('.log-box');
-            logBox.className = 'log-box complete';
-            logBox.innerHTML = `
+            const fileData = getWindowUserFile(checksum);
+            if (fileData.data.audioBlob) {
+              const logBox = card.querySelector('.log-box');
+              logBox.className = 'log-box complete';
+              logBox.innerHTML = `
               <span class="material-icons">check_circle</span>
-              <span>Processing complete (${processingTime}s)</span>`;
+              <span>Processing complete!</span>`;
+            }
           };
 
-          video.playbackRate = 16;
+          video.playbackRate = playbackSpeed;
           recorder.start();
           video.onended = () => recorder.stop();
 
