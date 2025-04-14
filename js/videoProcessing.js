@@ -174,7 +174,7 @@ async function processVideo(
             console.log('Duration is good!');
           }
         };
-        displayVideo.playbackRate = invertedPlaybackRate;
+        // displayVideo.playbackRate = invertedPlaybackRate;
         displayVideo.controls = true;
       };
 
