@@ -68,21 +68,22 @@ async function processVideo(
       let mediaRecorder;
       let audioRecorder;
       let stream;
+      const duration = processingVideo.duration;
+      const targetDuration = duration / playbackRate;
 
-      const canvas = document.createElement('canvas');
-      canvas.width = downsampledWidth;
-      canvas.height =
-        processingVideo.videoHeight *
-        (downsampledWidth / processingVideo.videoWidth);
+      // const canvas = document.createElement('canvas');
+      // canvas.width = downsampledWidth;
+      // canvas.height =
+      //   processingVideo.videoHeight *
+      //   (downsampledWidth / processingVideo.videoWidth);
 
-      const ctx = canvas.getContext('2d');
+      // const ctx = canvas.getContext('2d');
+      // const drawFrame = () => {
+      //   ctx.drawImage(processingVideo, 0, 0, canvas.width, canvas.height);
+      //   requestAnimationFrame(drawFrame);
+      // };
+      // drawFrame();
       stream = processingVideo.mozCaptureStream();
-
-      const drawFrame = () => {
-        ctx.drawImage(processingVideo, 0, 0, canvas.width, canvas.height);
-        requestAnimationFrame(drawFrame);
-      };
-      drawFrame();
 
       // Try different codec configurations
       const codecConfigs = [
@@ -109,7 +110,10 @@ async function processVideo(
       }
 
       try {
-        mediaRecorder = new MediaRecorder(stream, selectedConfig);
+        const config = {
+          mimeType: selectedConfig.mimeType,
+        };
+        mediaRecorder = new MediaRecorder(stream, config);
 
         // Create audio-only stream
         const audioStream = new MediaStream();
@@ -155,6 +159,21 @@ async function processVideo(
 
         // Replace the display video with the processed video blob
         displayVideo.src = URL.createObjectURL(videoBlob);
+        displayVideo.onloadedmetadata = () => {
+          const processedDuration = displayVideo.duration;
+          const durationDiffInSeconds = Math.abs(
+            processedDuration - targetDuration
+          );
+
+          if (durationDiffInSeconds > 5) {
+            // Allow 5 seconds tolerance
+            statusLabel.textContent = `Warning: Duration mismatch! Expected ${targetDuration.toFixed(
+              2
+            )}s, got ${processedDuration.toFixed(2)}s`;
+          } else {
+            console.log('Duration is good!');
+          }
+        };
         displayVideo.playbackRate = invertedPlaybackRate;
         displayVideo.controls = true;
       };
@@ -170,8 +189,6 @@ async function processVideo(
         resolve();
       };
 
-      const duration = processingVideo.duration;
-      const targetDuration = duration / playbackRate;
       let currentTime = 0;
 
       processingVideo.playbackRate = playbackRate;

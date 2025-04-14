@@ -15,9 +15,9 @@
 
 .app-header {
   margin: 1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  /* position: sticky; */
+  /* top: 0; */
+  /* z-index: 100; */
 }
 
 .header-content {
@@ -355,7 +355,8 @@ video {
 }
 
 .playback-control {
-  display: flex;
+  display: none;
+  /* display: flex; */
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5rem 0;
