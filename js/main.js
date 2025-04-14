@@ -10,6 +10,61 @@ if (!isFirefox) {
   throw new Error('Browser not supported');
 }
 
+// Display user specifications
+function displayUserSpecs() {
+  const userSpecs = document.getElementById('userSpecs');
+
+  // Get OS information
+  const osInfo = navigator.platform;
+  const osVersion = navigator.userAgent.match(/\(([^)]+)\)/)[1];
+
+  // Get browser information
+  const browserInfo = navigator.userAgent;
+
+  // Get screen information
+  const screenResolution = `${window.screen.width}x${window.screen.height}`;
+  const colorDepth = `${window.screen.colorDepth}-bit color`;
+  const pixelRatio = window.devicePixelRatio;
+
+  // Get CPU information
+  const cpuCores = navigator.hardwareConcurrency || 'CPU info not available';
+
+  // Get WebGL information
+  let webglInfo = 'WebGL not available';
+  const canvas = document.createElement('canvas');
+  const gl =
+    canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (gl) {
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+    if (debugInfo) {
+      webglInfo = `${gl.getParameter(
+        debugInfo.UNMASKED_VENDOR_WEBGL
+      )} ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}`;
+    }
+  }
+
+  // Create specs HTML
+  const specsHTML = `
+    <p>OS: ${osInfo} ${osVersion}</p>
+    <p>Browser: ${browserInfo}</p>
+    <p>Screen: ${screenResolution} @ ${pixelRatio}x (${colorDepth})</p>
+    <p>CPU: ${cpuCores} cores</p>
+    <p>Biggest video size: <span id="biggestVideoSize">${biggetVideosBlobSizes} MB</span></p>
+    <p>WebGL: ${webglInfo}</p>
+  `;
+
+  userSpecs.innerHTML = specsHTML;
+}
+
+// Helper function to update battery info after async fetch
+function updateBatteryInfo(info) {
+  const userSpecs = document.getElementById('userSpecs');
+  const batteryElement = userSpecs.querySelector('p:nth-child(6)');
+  if (batteryElement) {
+    batteryElement.textContent = `Battery: ${info}`;
+  }
+}
+
 // Global configuration
 let playbackRate = 6;
 let invertedPlaybackRate = 1 / playbackRate;
@@ -22,6 +77,10 @@ let selectedVideos = [];
 let processedVideos = [];
 let processedAudios = [];
 let pairCount = 0;
+let biggetVideosBlobSizes = 0;
+
+// Call the function to display specs
+displayUserSpecs();
 
 // DOM elements
 const videoInput = document.getElementById('videoInput');

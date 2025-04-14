@@ -54,19 +54,241 @@ function toggleVideoSelection(id) {
   console.log(`Updated selectedVideos:`, selectedVideos);
 }
 
+function drawWaveform(canvas, signal, offset, color = '#4caf50') {
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Clear the canvas
+  ctx.clearRect(0, 0, width, height);
+
+  // Set the drawing style
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+
+  // Calculate the number of samples to display
+  const samplesPerPixel = Math.ceil(signal.length / width);
+  const centerY = height / 2;
+
+  // Preprocess the signal
+  const preprocessedSignal = preprocessSignal(signal);
+
+  // Enhance the signal
+  let maxSample = 0;
+  for (let i = 0; i < preprocessedSignal.length; i++) {
+    const absValue = Math.abs(preprocessedSignal[i]);
+    if (absValue > maxSample) {
+      maxSample = absValue;
+    }
+  }
+
+  // Apply signal enhancement
+  const enhancedSignal = preprocessedSignal.map((sample) => {
+    // Normalize to [-1, 1]
+    const normalized = sample / maxSample;
+    // Apply cubic transformation to enhance peaks
+    return Math.sign(normalized) * Math.pow(Math.abs(normalized), 0.7);
+  });
+
+  // Find new max after enhancement
+  let newMaxSample = 0;
+  for (let i = 0; i < enhancedSignal.length; i++) {
+    const absValue = Math.abs(enhancedSignal[i]);
+    if (absValue > newMaxSample) {
+      newMaxSample = absValue;
+    }
+  }
+
+  const normalizedSignal = enhancedSignal.map(
+    (sample) => (sample / newMaxSample) * 0.8
+  );
+
+  // Start drawing the waveform
+  ctx.beginPath();
+
+  for (let x = 0; x < width; x++) {
+    // Calculate the sample index, taking into account the offset
+    const sampleIndex = Math.floor(x * samplesPerPixel) + offset;
+
+    if (sampleIndex >= 0 && sampleIndex < normalizedSignal.length) {
+      // Get the normalized sample value and scale it to the canvas height
+      const sample = normalizedSignal[sampleIndex];
+      const y = centerY + sample * centerY;
+
+      // Move to the first point or draw a line to the next point
+      if (x === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+  }
+
+  // Draw the waveform
+  ctx.stroke();
+
+  // Analyze pitch and find highest pitch timestamp
+  const sampleRate = 44100; // Assuming 44.1kHz sample rate
+  const windowSize = 1024; // Analysis window size
+  const hopSize = 512; // Hop size between windows
+
+  let maxPitch = 0;
+  let maxPitchTime = 0;
+
+  for (let i = 0; i < signal.length - windowSize; i += hopSize) {
+    const window = signal.slice(i, i + windowSize);
+    const pitch = estimatePitch(window, sampleRate);
+
+    if (pitch > maxPitch) {
+      maxPitch = pitch;
+      maxPitchTime = i / sampleRate; // Convert sample index to seconds
+    }
+  }
+
+  return maxPitchTime;
+}
+
+// Helper function to estimate pitch using zero-crossing rate
+function estimatePitch(samples, sampleRate) {
+  let zeroCrossings = 0;
+  let prevSample = samples[0];
+
+  for (let i = 1; i < samples.length; i++) {
+    if (
+      (prevSample < 0 && samples[i] >= 0) ||
+      (prevSample >= 0 && samples[i] < 0)
+    ) {
+      zeroCrossings++;
+    }
+    prevSample = samples[i];
+  }
+
+  // Convert zero-crossing rate to frequency (Hz)
+  const frequency = (zeroCrossings * sampleRate) / (2 * samples.length);
+  return frequency;
+}
+
+// Function to analyze signal and find high pitch points
+function analyzeSignalPitch(signal, sampleRate = 44100) {
+  const windowSize = 1024; // Analysis window size
+  const hopSize = 512; // Hop size between windows
+  const pitchThreshold = 200; // Minimum frequency to consider as high pitch (Hz)
+
+  const pitchPoints = [];
+
+  for (let i = 0; i < signal.length - windowSize; i += hopSize) {
+    const window = signal.slice(i, i + windowSize);
+    const pitch = estimatePitch(window, sampleRate);
+    const time = i / sampleRate; // Convert sample index to seconds
+
+    if (pitch > pitchThreshold) {
+      pitchPoints.push({
+        time,
+        pitch,
+        amplitude: Math.max(...window.map(Math.abs)), // Store amplitude for correlation
+      });
+    }
+  }
+
+  return pitchPoints;
+}
+
+// Function to find best correlation between two sets of pitch points
+function findBestCorrelation(points1, points2, maxOffset = 5) {
+  let bestCorrelation = -Infinity;
+  let bestOffset = 0;
+
+  // Try different offsets within the maxOffset range
+  for (let offset = -maxOffset; offset <= maxOffset; offset += 0.1) {
+    let correlation = 0;
+    let count = 0;
+
+    // For each point in the first audio
+    for (const point1 of points1) {
+      // Find points in the second audio that are close in time (considering the offset)
+      const matchingPoints = points2.filter(
+        (point2) => Math.abs(point2.time + offset - point1.time) < 0.1 // 100ms window
+      );
+
+      if (matchingPoints.length > 0) {
+        // Calculate correlation based on pitch similarity and amplitude
+        const bestMatch = matchingPoints.reduce(
+          (best, point2) => {
+            const pitchDiff = Math.abs(point2.pitch - point1.pitch);
+            const amplitudeDiff = Math.abs(point2.amplitude - point1.amplitude);
+            const score = 1 / (1 + pitchDiff + amplitudeDiff);
+            return score > best.score ? { score, point: point2 } : best;
+          },
+          { score: 0, point: null }
+        );
+
+        correlation += bestMatch.score;
+        count++;
+      }
+    }
+
+    // Normalize correlation by the number of matches
+    if (count > 0) {
+      correlation /= count;
+
+      if (correlation > bestCorrelation) {
+        bestCorrelation = correlation;
+        bestOffset = offset;
+      }
+    }
+  }
+
+  return {
+    offset: bestOffset,
+    confidence: bestCorrelation,
+  };
+}
+
+// Signal preprocessing function
+function preprocessSignal(signal) {
+  // Apply moving average for noise reduction
+  const windowSize = 3; // Reduced from 5 to 3 for less smoothing
+  const smoothedSignal = new Array(signal.length).fill(0);
+
+  for (let i = 0; i < signal.length; i++) {
+    let sum = 0;
+    let count = 0;
+    for (let j = -windowSize; j <= windowSize; j++) {
+      const index = i + j;
+      if (index >= 0 && index < signal.length) {
+        sum += signal[index];
+        count++;
+      }
+    }
+    smoothedSignal[i] = sum / count;
+  }
+
+  // Apply a simple high-pass filter to remove DC offset and low-frequency noise
+  const alpha = 0.98; // Increased from 0.95 to preserve more low frequencies
+  const filteredSignal = new Array(smoothedSignal.length).fill(0);
+  filteredSignal[0] = smoothedSignal[0];
+
+  for (let i = 1; i < smoothedSignal.length; i++) {
+    filteredSignal[i] =
+      alpha *
+      (filteredSignal[i - 1] + smoothedSignal[i] - smoothedSignal[i - 1]);
+  }
+
+  // Apply a simple threshold to remove very quiet parts
+  const threshold = 0.05; // Reduced from 0.1 to preserve more of the signal
+  const thresholdedSignal = filteredSignal.map((sample) => {
+    return Math.abs(sample) < threshold ? 0 : sample;
+  });
+
+  return thresholdedSignal;
+}
+
 // Handle pair videos button click
 pairVideos.addEventListener('click', async () => {
   const usedPlaybackRate = playbackRate;
   const usedInvertedPlaybackRate = 1 / usedPlaybackRate;
   const pairId = crypto.randomUUID();
   console.log('Pair button clicked');
-  // console.log('Current selectedVideos:', selectedVideos);
-
-  // // Filter out any selected videos that are already hidden
-  // selectedVideos = selectedVideos.filter(({ id }) => {
-  //   const videoItem = document.getElementById(`video-item-${id}`);
-  //   return videoItem && videoItem.style.display !== 'none';
-  // });
 
   console.log('Filtered selectedVideos:', selectedVideos);
 
@@ -87,12 +309,7 @@ pairVideos.addEventListener('click', async () => {
   pairVideosContainer.className = 'pair-videos';
   pairVideosContainer.id = `video-pair-${pairId}`;
 
-  const alignmentResults = document.createElement('div');
-  alignmentResults.className = 'alignment-results';
-  alignmentResults.id = `alignment-results-${pairId}`;
-
   newPairCard.appendChild(pairVideosContainer);
-  newPairCard.appendChild(alignmentResults);
   document.getElementById('pairSection').appendChild(newPairCard);
 
   // Hide selected videos from upload section
@@ -111,31 +328,4 @@ pairVideos.addEventListener('click', async () => {
     processVideo(file, id, pairId, usedPlaybackRate, usedInvertedPlaybackRate)
   );
   await Promise.all(processingPromises);
-
-  const currentPairAudios = processedAudios.filter(({ id }) =>
-    pairedVideos.some(({ id: selectedId }) => selectedId === id)
-  );
-
-  // Get the last two audio blobs for this pair
-  // const currentPairAudios = processedAudios.slice(-2);
-  const alignmentResult = await audioAlign(
-    currentPairAudios[0].blob,
-    currentPairAudios[1].blob,
-    usedPlaybackRate
-  );
-
-  // Update alignment results
-  alignmentResults.innerHTML = `
-    <strong>Audio Alignment Results:</strong><br>
-    <span>Estimated offset: ${(
-      alignmentResult.offset * usedPlaybackRate
-    ).toFixed(3)} seconds</span><br>
-    <span>Estimated overlap: ${(
-      (alignmentResult.minDuration - Math.abs(alignmentResult.offset)) *
-      usedPlaybackRate
-    ).toFixed(3)} seconds</span><br>
-    <span>Audio similarity confidence: ${alignmentResult.confidence.toFixed(
-      1
-    )}%</span>
-  `;
 });

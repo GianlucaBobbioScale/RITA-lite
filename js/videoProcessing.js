@@ -37,19 +37,11 @@ async function processVideo(
     checksumLabel.className = 'checksum-label';
     checksumLabel.textContent = `Checksum: ${videoChecksum}`;
 
-    const audioPlayer = document.createElement('audio');
-    audioPlayer.className = 'audio-player';
-    audioPlayer.controls = true;
-    audioPlayer.style.width = '100%';
-    audioPlayer.style.marginTop = '10px';
-    audioPlayer.style.display = 'none';
-
     videoContainer.appendChild(displayVideo);
     videoContainer.appendChild(progressContainer);
     videoContainer.appendChild(statusLabel);
     videoContainer.appendChild(dimensionsLabel);
     videoContainer.appendChild(checksumLabel);
-    videoContainer.appendChild(audioPlayer);
     pairContainer.appendChild(videoContainer);
 
     // Create hidden video element for processing
@@ -66,34 +58,20 @@ async function processVideo(
 
     processingVideo.onloadedmetadata = () => {
       let mediaRecorder;
-      let audioRecorder;
       let stream;
       const duration = processingVideo.duration;
       const targetDuration = duration / playbackRate;
 
-      // const canvas = document.createElement('canvas');
-      // canvas.width = downsampledWidth;
-      // canvas.height =
-      //   processingVideo.videoHeight *
-      //   (downsampledWidth / processingVideo.videoWidth);
-
-      // const ctx = canvas.getContext('2d');
-      // const drawFrame = () => {
-      //   ctx.drawImage(processingVideo, 0, 0, canvas.width, canvas.height);
-      //   requestAnimationFrame(drawFrame);
-      // };
-      // drawFrame();
       stream = processingVideo.mozCaptureStream();
 
       // Try different codec configurations
       const codecConfigs = [
+        { mimeType: 'video/webm;codecs=vp9' },
         { mimeType: 'video/webm' },
         { mimeType: 'video/webm;codecs=vp8' },
         { mimeType: 'video/webm;codecs=vp8,opus' },
         { mimeType: 'video/mp4' },
       ];
-
-      const audioConfig = { mimeType: 'audio/webm' };
 
       let selectedConfig = null;
       for (const config of codecConfigs) {
@@ -110,18 +88,13 @@ async function processVideo(
       }
 
       try {
+        console.log('selectedConfig', selectedConfig);
         const config = {
           mimeType: selectedConfig.mimeType,
+          videoBitsPerSecond: 100_000, // Lower bitrate for reduced quality
+          bitsPerSecond: 100_000,
         };
         mediaRecorder = new MediaRecorder(stream, config);
-
-        // Create audio-only stream
-        const audioStream = new MediaStream();
-        stream.getAudioTracks().forEach((track) => {
-          audioStream.addTrack(track);
-        });
-
-        audioRecorder = new MediaRecorder(audioStream, audioConfig);
       } catch (e) {
         statusLabel.textContent = 'Error: Failed to create MediaRecorder';
         console.error('MediaRecorder error:', e);
@@ -130,14 +103,9 @@ async function processVideo(
       }
 
       const videoChunks = [];
-      const audioChunks = [];
 
       mediaRecorder.ondataavailable = (e) => {
         videoChunks.push(e.data);
-      };
-
-      audioRecorder.ondataavailable = (e) => {
-        audioChunks.push(e.data);
       };
 
       mediaRecorder.onstop = () => {
@@ -149,11 +117,20 @@ async function processVideo(
           blob: videoBlob,
           checksum: videoChecksum,
         });
-        dimensionsLabel.textContent = `${processingVideo.videoWidth}x${
-          processingVideo.videoHeight
-        } @ ${fps.toFixed(2)} FPS`;
+
+        // Calculate total size of all processed videos
+        biggetVideosBlobSizes =
+          processedVideos.reduce((total, video) => total + video.blob.size, 0) /
+          (1024 * 1024); // Convert to MB
+
+        const biggestVideoSize = document.getElementById('biggestVideoSize');
+        biggestVideoSize.textContent = `${biggetVideosBlobSizes.toFixed(2)} MB`;
+
+        dimensionsLabel.textContent = `${duration.toFixed(2)}s ${
+          processingVideo.videoWidth
+        }x${processingVideo.videoHeight} @ ${fps.toFixed(2)} FPS`;
         document.body.removeChild(processingVideo);
-        statusLabel.textContent = `Processing complete! (${targetDuration.toFixed(
+        statusLabel.textContent = `Processing complete ${playbackRate}x! (${targetDuration.toFixed(
           2
         )} seconds) (${(videoBlob.size / 1024 / 1024).toFixed(2)} MB)`;
 
@@ -165,7 +142,7 @@ async function processVideo(
             processedDuration - targetDuration
           );
 
-          if (durationDiffInSeconds > 5) {
+          if (durationDiffInSeconds > playbackRate * 1.5) {
             // Allow 5 seconds tolerance
             statusLabel.textContent = `Warning: Duration mismatch! Expected ${targetDuration.toFixed(
               2
@@ -176,16 +153,6 @@ async function processVideo(
         };
         // displayVideo.playbackRate = invertedPlaybackRate;
         displayVideo.controls = true;
-      };
-
-      audioRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        processedAudios.push({
-          blob: audioBlob,
-          id,
-        });
-        audioPlayer.src = URL.createObjectURL(audioBlob);
-        audioPlayer.playbackRate = invertedPlaybackRate;
         resolve();
       };
 
@@ -193,7 +160,6 @@ async function processVideo(
 
       processingVideo.playbackRate = playbackRate;
       mediaRecorder.start();
-      audioRecorder.start();
       processingVideo.play();
 
       const progressInterval = setInterval(() => {
@@ -204,7 +170,6 @@ async function processVideo(
         if (currentTime >= targetDuration) {
           clearInterval(progressInterval);
           mediaRecorder.stop();
-          audioRecorder.stop();
         }
       }, 100);
     };
