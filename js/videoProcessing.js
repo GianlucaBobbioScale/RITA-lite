@@ -1,4 +1,10 @@
-async function processVideo(file, id, pairId) {
+async function processVideo(
+  file,
+  id,
+  pairId,
+  playbackRate,
+  invertedPlaybackRate
+) {
   const videoChecksum = await getFileChecksum(file);
   // const videoDuration = await getVideoDuration(file);
   return new Promise((resolve) => {
@@ -22,7 +28,7 @@ async function processVideo(file, id, pairId) {
 
     const statusLabel = document.createElement('div');
     statusLabel.className = 'processing-label';
-    statusLabel.textContent = 'Processing...';
+    statusLabel.textContent = `Processing at ${playbackRate}x...`;
 
     const dimensionsLabel = document.createElement('div');
     dimensionsLabel.className = 'dimensions-label';

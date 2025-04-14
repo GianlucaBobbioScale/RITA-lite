@@ -39,11 +39,32 @@
       <div class="section">
         <div class="section-title">Upload Videos</div>
         <div class="controls">
-          <label for="videoInput" class="custom-file-input"
-            >Select Videos</label
-          >
-          <input type="file" id="videoInput" multiple accept="video/*,.insv" />
-          <button id="pairVideos">Pair Selected Videos</button>
+          <div class="controls-left">
+            <label for="videoInput" class="custom-file-input"
+              >Select Videos</label
+            >
+            <input
+              type="file"
+              id="videoInput"
+              multiple
+              accept="video/*,.insv"
+            />
+            <button id="pairVideos">Pair Selected Videos</button>
+          </div>
+          <div class="playback-control">
+            <div class="playback-header">
+              <label for="playbackRate">Playback Rate:</label>
+              <span id="playbackRateValue">6x</span>
+            </div>
+            <input
+              type="range"
+              id="playbackRate"
+              min="1"
+              max="16"
+              step="0.5"
+              value="6"
+            />
+          </div>
         </div>
         <div class="video-container" id="videoContainer"></div>
       </div>

@@ -11,8 +11,8 @@ if (!isFirefox) {
 }
 
 // Global configuration
-const playbackRate = 6;
-const invertedPlaybackRate = 1 / playbackRate;
+let playbackRate = 6;
+let invertedPlaybackRate = 1 / playbackRate;
 const downsampledWidth = 640;
 const ctx = new AudioContext();
 
@@ -29,3 +29,12 @@ const pairVideos = document.getElementById('pairVideos');
 const videoContainer = document.getElementById('videoContainer');
 const pairSection = document.getElementById('pairSection');
 const processSection = document.getElementById('processSection');
+const playbackRateSlider = document.getElementById('playbackRate');
+const playbackRateValue = document.getElementById('playbackRateValue');
+
+// Update playback rate when slider changes
+playbackRateSlider.addEventListener('input', (e) => {
+  playbackRate = parseFloat(e.target.value);
+  invertedPlaybackRate = 1 / playbackRate;
+  playbackRateValue.textContent = `${playbackRate.toFixed(1)}x`;
+});

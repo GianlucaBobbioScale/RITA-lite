@@ -1,4 +1,4 @@
-async function audioAlign(audioBlob1, audioBlob2) {
+async function audioAlign(audioBlob1, audioBlob2, playbackRate) {
   async function decode(file) {
     const buffer = await file.arrayBuffer();
     return ctx.decodeAudioData(buffer);

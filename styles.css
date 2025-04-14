@@ -74,8 +74,15 @@ body {
 
 .controls {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.controls-left {
+  display: flex;
   gap: 1rem;
   align-items: center;
+  justify-content: flex-start;
 }
 
 input[type='file'] {
@@ -345,4 +352,36 @@ video {
   .landing-content p {
     font-size: 1rem;
   }
+}
+
+.playback-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.playback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.playback-control label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.playback-control input[type='range'] {
+  width: 100%;
+  height: 0.5rem;
+  -webkit-appearance: none;
+  background: #aaaaaa;
+  border-radius: 0.25rem;
+  outline: none;
+}
+
+#playbackRateValue {
+  font-size: 0.875rem;
+  color: var(--text-primary);
 }

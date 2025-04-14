@@ -56,6 +56,8 @@ function toggleVideoSelection(id) {
 
 // Handle pair videos button click
 pairVideos.addEventListener('click', async () => {
+  const usedPlaybackRate = playbackRate;
+  const usedInvertedPlaybackRate = 1 / usedPlaybackRate;
   const pairId = crypto.randomUUID();
   console.log('Pair button clicked');
   // console.log('Current selectedVideos:', selectedVideos);
@@ -106,7 +108,7 @@ pairVideos.addEventListener('click', async () => {
   });
 
   const processingPromises = pairedVideos.map(({ file, id }) =>
-    processVideo(file, id, pairId)
+    processVideo(file, id, pairId, usedPlaybackRate, usedInvertedPlaybackRate)
   );
   await Promise.all(processingPromises);
 
@@ -118,18 +120,19 @@ pairVideos.addEventListener('click', async () => {
   // const currentPairAudios = processedAudios.slice(-2);
   const alignmentResult = await audioAlign(
     currentPairAudios[0].blob,
-    currentPairAudios[1].blob
+    currentPairAudios[1].blob,
+    usedPlaybackRate
   );
 
   // Update alignment results
   alignmentResults.innerHTML = `
     <strong>Audio Alignment Results:</strong><br>
-    <span>Estimated offset: ${(alignmentResult.offset * playbackRate).toFixed(
-      3
-    )} seconds</span><br>
+    <span>Estimated offset: ${(
+      alignmentResult.offset * usedPlaybackRate
+    ).toFixed(3)} seconds</span><br>
     <span>Estimated overlap: ${(
       (alignmentResult.minDuration - Math.abs(alignmentResult.offset)) *
-      playbackRate
+      usedPlaybackRate
     ).toFixed(3)} seconds</span><br>
     <span>Audio similarity confidence: ${alignmentResult.confidence.toFixed(
       1
