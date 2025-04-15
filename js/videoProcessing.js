@@ -11,10 +11,7 @@ async function processVideo(
     let videoBlob;
     const pairContainer = document.getElementById(`video-pair-${pairId}`);
 
-    const useCurrentTimeMethod = new URL(window.location.href).searchParams.get(
-      'useTimer'
-    );
-    console.log('useCurrentTimeMethod', useCurrentTimeMethod);
+    const useCurrentTimeMethod = true;
 
     if (useCurrentTimeMethod) {
       playbackRate = 5;
