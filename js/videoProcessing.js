@@ -8,7 +8,18 @@ async function processVideo(
   const videoChecksum = await getFileChecksum(file);
   // const videoDuration = await getVideoDuration(file);
   return new Promise((resolve) => {
+    let videoBlob;
     const pairContainer = document.getElementById(`video-pair-${pairId}`);
+
+    const useCurrentTimeMethod = new URL(window.location.href).searchParams.get(
+      'useTimer'
+    );
+    console.log('useCurrentTimeMethod', useCurrentTimeMethod);
+
+    if (useCurrentTimeMethod) {
+      playbackRate = 5;
+      invertedPlaybackRate = 1 / playbackRate;
+    }
 
     const videoContainer = document.createElement('div');
     videoContainer.className = 'pair-video';
@@ -19,6 +30,16 @@ async function processVideo(
     displayVideo.className = 'thumbnail';
     displayVideo.src = URL.createObjectURL(file);
     displayVideo.controls = false;
+
+    const downloadButton = document.createElement('button');
+    downloadButton.textContent = 'Download video';
+    downloadButton.className = 'download-button';
+    downloadButton.style.display = 'none';
+    downloadButton.addEventListener('click', () => {
+      const a = document.createElement('a');
+      a.href = displayVideo.src;
+      a.download = 'output.webm';
+    });
 
     const progressContainer = document.createElement('div');
     progressContainer.className = 'progress-container';
@@ -42,6 +63,7 @@ async function processVideo(
     videoContainer.appendChild(statusLabel);
     videoContainer.appendChild(dimensionsLabel);
     videoContainer.appendChild(checksumLabel);
+    videoContainer.appendChild(downloadButton);
     pairContainer.appendChild(videoContainer);
 
     // Create hidden video element for processing
@@ -61,8 +83,6 @@ async function processVideo(
       let stream;
       const duration = processingVideo.duration;
       const targetDuration = duration / playbackRate;
-
-      stream = processingVideo.mozCaptureStream();
 
       // Try different codec configurations
       const codecConfigs = [
@@ -87,31 +107,7 @@ async function processVideo(
         return;
       }
 
-      try {
-        console.log('selectedConfig', selectedConfig);
-        const config = {
-          mimeType: selectedConfig.mimeType,
-          videoBitsPerSecond: 100_000, // Lower bitrate for reduced quality
-          bitsPerSecond: 100_000,
-        };
-        mediaRecorder = new MediaRecorder(stream, config);
-      } catch (e) {
-        statusLabel.textContent = 'Error: Failed to create MediaRecorder';
-        console.error('MediaRecorder error:', e);
-        resolve();
-        return;
-      }
-
-      const videoChunks = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        videoChunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const videoBlob = new Blob(videoChunks, {
-          type: selectedConfig.mimeType,
-        });
+      const onFinishedProcessing = () => {
         processedVideos.push({
           id,
           blob: videoBlob,
@@ -156,22 +152,174 @@ async function processVideo(
         resolve();
       };
 
-      let currentTime = 0;
+      const useCurrentTimeMethod = new URL(
+        window.location.href
+      ).searchParams.get('useTimer');
+      console.log('useCurrentTimeMethod', useCurrentTimeMethod);
 
-      processingVideo.playbackRate = playbackRate;
-      mediaRecorder.start();
-      processingVideo.play();
+      try {
+        if (useCurrentTimeMethod) {
+          // Create a canvas element
+          const screenshots = [];
+          const canvas = document.createElement('canvas');
+          canvas.width = 640;
+          canvas.height =
+            (canvas.width * processingVideo.videoHeight) /
+            processingVideo.videoWidth;
+          canvas.style.display = 'none';
+          const ctx = canvas.getContext('2d');
+          document.body.appendChild(canvas);
 
-      const progressInterval = setInterval(() => {
-        currentTime += 0.1;
-        const progress = (currentTime / targetDuration) * 100;
-        progressBar.style.width = `${Math.min(progress, 100)}%`;
+          const step = 1;
+          let currentTime = 0;
 
-        if (currentTime >= targetDuration) {
-          clearInterval(progressInterval);
-          mediaRecorder.stop();
+          async function createVideoFromImages(images, fps = 4) {
+            const encoder = new Whammy.Video(fps);
+
+            for (let imgSrc of images) {
+              const image = new Image();
+              image.src = imgSrc;
+              await new Promise((res) => (image.onload = res));
+
+              // draw to temp canvas
+              const tempCanvas = document.createElement('canvas');
+              tempCanvas.width = image.width;
+              tempCanvas.height = image.height;
+              const tempCtx = tempCanvas.getContext('2d');
+              tempCtx.drawImage(image, 0, 0);
+
+              // add frame as canvas
+              encoder.add(tempCanvas);
+            }
+
+            encoder.compile(false, (output) => {
+              videoBlob = output;
+              onFinishedProcessing();
+            });
+          }
+
+          async function captureFrames() {
+            return new Promise((resolve) => {
+              const captureNext = () => {
+                if (currentTime >= duration) {
+                  createVideoFromImages(screenshots);
+                  resolve();
+                  return;
+                }
+
+                const progress = currentTime / duration;
+
+                progressBar.style.width = `${Math.min(progress * 100, 100)}%`;
+
+                processingVideo.currentTime = currentTime;
+
+                processingVideo.addEventListener('seeked', function onSeeked() {
+                  processingVideo.removeEventListener('seeked', onSeeked);
+
+                  ctx.drawImage(
+                    processingVideo,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                  );
+                  canvas.toBlob((blob) => {
+                    screenshots.push(URL.createObjectURL(blob));
+                  }, 'image/png');
+
+                  currentTime += step;
+                  setTimeout(captureNext, 200); // short delay to avoid overloading
+                });
+              };
+
+              captureNext();
+            });
+          }
+          captureFrames();
+        } else {
+          // else use the normal media recorder method
+          const useCanvas = new URL(window.location.href).searchParams.get(
+            'useCanvas'
+          );
+          console.log('useCanvas', useCanvas);
+          const highVideoBitsPerSecond = new URL(
+            window.location.href
+          ).searchParams.get('highVideoBitsPerSecond');
+          console.log('highVideoBitsPerSecond', highVideoBitsPerSecond);
+          const config = {
+            mimeType: selectedConfig.mimeType,
+            frameRate: 100,
+            ...(highVideoBitsPerSecond
+              ? {
+                  videoBitsPerSecond: 10_000_000,
+                }
+              : {}),
+          };
+          if (useCanvas) {
+            // Create a canvas element
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height =
+              (640 / processingVideo.videoWidth) * processingVideo.videoHeight;
+            canvas.style.display = 'none';
+            const ctx = canvas.getContext('2d');
+            document.body.appendChild(canvas);
+
+            // Capture the canvas stream
+            const canvasStream = canvas.captureStream(100);
+
+            // Set up MediaRecorder with the canvas stream
+            mediaRecorder = new MediaRecorder(canvasStream, config);
+
+            // Draw video frames on the canvas
+            function drawFrame() {
+              ctx.drawImage(processingVideo, 0, 0, canvas.width, canvas.height);
+              requestAnimationFrame(drawFrame);
+            }
+
+            // Start drawing frames
+            drawFrame();
+          } else {
+            stream = processingVideo.mozCaptureStream();
+            mediaRecorder = new MediaRecorder(stream, config);
+          }
+          const videoChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            videoChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            videoBlob = new Blob(videoChunks, {
+              type: selectedConfig.mimeType,
+            });
+            onFinishedProcessing();
+          };
+
+          let currentTime = 0;
+
+          processingVideo.playbackRate = playbackRate;
+          mediaRecorder.start();
+          processingVideo.muted = true;
+          processingVideo.play();
+
+          const progressInterval = setInterval(() => {
+            currentTime += 0.1;
+            const progress = (currentTime / targetDuration) * 100;
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+
+            if (currentTime >= targetDuration) {
+              clearInterval(progressInterval);
+              mediaRecorder.stop();
+            }
+          }, 100);
         }
-      }, 100);
+      } catch (e) {
+        statusLabel.textContent = 'Error: Failed to create MediaRecorder';
+        console.error('MediaRecorder error:', e);
+        resolve();
+        return;
+      }
     };
   });
 }

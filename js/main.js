@@ -66,7 +66,7 @@ function updateBatteryInfo(info) {
 }
 
 // Global configuration
-let playbackRate = 6;
+let playbackRate = 4;
 let invertedPlaybackRate = 1 / playbackRate;
 const downsampledWidth = 640;
 const ctx = new AudioContext();
