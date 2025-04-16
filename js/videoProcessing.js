@@ -85,7 +85,7 @@ async function processVideo(
     const statusLabel = pairContainer.querySelector(
       `#processing-video-${pairId}-${id} .processing-label`
     );
-    statusLabel.textContent = `Processing at ${playbackRate}x...`;
+    statusLabel.textContent = `Processing...`;
 
     const dimensionsLabel = document.createElement('div');
     dimensionsLabel.className = 'dimensions-label';
@@ -161,7 +161,7 @@ async function processVideo(
           processingVideo.videoWidth
         }x${processingVideo.videoHeight} @ ${fps.toFixed(2)} FPS`;
         document.body.removeChild(processingVideo);
-        statusLabel.textContent = `Processing complete ${playbackRate}x! (${processingTime.toFixed(
+        statusLabel.textContent = `Processing complete! (${processingTime.toFixed(
           2
         )} seconds) (Screenshots: ${screenshots.length} ${(
           screenshotsSize /
