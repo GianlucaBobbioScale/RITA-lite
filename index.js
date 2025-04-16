@@ -8,9 +8,7 @@ function main() {
   logo.className = 'logo';
   logo.textContent = 'RITA-lite';
 
-  const staticHeaderLinks = [
-    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
-  ];
+  const staticHeaderLinks = [];
   let dynamicHeaderLinks = ['styles.css'];
   if (window.location.protocol !== 'file:') {
     dynamicHeaderLinks = dynamicHeaderLinks.map((src) => {

@@ -29,9 +29,12 @@ videoInput.addEventListener('change', (e) => {
     fileName.className = 'processing-label';
     fileName.textContent = file.name;
 
-    const trashIcon = document.createElement('i');
-    trashIcon.className = 'fas fa-trash-alt';
-    trashIcon.style.color = 'var(--error-color)';
+    const trashIcon = document.createElement('div');
+    trashIcon.className = 'trash-icon';
+    trashIcon.style.color = 'transparent';
+    trashIcon.style.textShadow = '0 0 0px var(--error-color)';
+    trashIcon.style.fontSize = 'small';
+    trashIcon.textContent = '🚫';
     trashIcon.style.cursor = 'pointer';
     trashIcon.onclick = () => removeVideo(id);
 
