@@ -182,7 +182,7 @@ function main() {
   if (window.location.protocol !== 'file:') {
     dynamicScripts = dynamicScripts.map((src) => {
       return (
-        'https://cdn.jsdelivr.net/gh/GianlucaBobbioScale/RITA-lite@master/' +
+        'https://gianlucabobbioscale.github.io/RITA-lite/' +
         src +
         '?v=' +
         timestamp
