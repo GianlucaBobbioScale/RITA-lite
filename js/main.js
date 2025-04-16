@@ -94,7 +94,10 @@ class VideoProcessingQueue {
           `video-pair-${pairIdArg}`
         );
         const taskIdElement = document.createElement('div');
-        taskIdElement.textContent = `Task ID: ${taskId}`;
+        const duration = Math.min(
+          ...pair.videos.map(({ data }) => data.duration)
+        );
+        taskIdElement.textContent = `Task ID: ${taskId} - ${duration} seconds`;
         taskIdElement.className = 'task-id';
         pairContainer.appendChild(taskIdElement);
       }
