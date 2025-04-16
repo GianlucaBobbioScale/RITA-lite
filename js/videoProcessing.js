@@ -20,6 +20,15 @@ async function addVideoOnQueue(file, id, pairId) {
   videoContainer.appendChild(statusLabel);
   pairContainer.appendChild(videoContainer);
 }
+
+async function updateUpdatedVideo(id, pairId) {
+  const statusLabel = document.getElementById(
+    `processing-video-${pairId}-${id} .processing-label`
+  );
+  statusLabel.style.color = 'green';
+  statusLabel.textContent = `Uploaded!`;
+}
+
 async function processVideo(
   file,
   id,
@@ -161,7 +170,7 @@ async function processVideo(
           processingVideo.videoWidth
         }x${processingVideo.videoHeight} @ ${fps.toFixed(2)} FPS`;
         document.body.removeChild(processingVideo);
-        statusLabel.textContent = `Processing complete! (${processingTime.toFixed(
+        statusLabel.textContent = `Uploading! (${processingTime.toFixed(
           2
         )} seconds) (Screenshots: ${video.data.screenshots.length} ${(
           screenshotsSize /
@@ -169,15 +178,13 @@ async function processVideo(
           1024
         ).toFixed(2)} MB)`;
 
-        // Replace the display video with a carrousel of screenshots
-        // change displayVideo from video to img
         displayVideo.style.display = 'none';
-        carrousel.src = URL.createObjectURL(video.data.screenshots[0]);
-        carrousel.style.display = 'block';
+        // carrousel.src = URL.createObjectURL(video.data.screenshots[0]);
+        // carrousel.style.display = 'block';
 
-        carrouselSlider.src = URL.createObjectURL(video.data.screenshots[0]);
-        carrouselSlider.max = video.data.screenshots.length / step - 1;
-        carrouselSlider.style.display = 'block';
+        // carrouselSlider.src = URL.createObjectURL(video.data.screenshots[0]);
+        // carrouselSlider.max = video.data.screenshots.length / step - 1;
+        // carrouselSlider.style.display = 'block';
         videoProcessingQueue.videoCompleted(pairId);
         resolve();
       };
@@ -201,7 +208,6 @@ async function processVideo(
 
         async function captureFrames() {
           const startTime = Date.now();
-          let seekedAskedTime;
           return new Promise((resolve) => {
             const captureNext = () => {
               if (currentTime >= duration) {
@@ -216,7 +222,6 @@ async function processVideo(
 
               progressBar.style.width = `${Math.min(progress * 100, 100)}%`;
 
-              seekedAskedTime = Date.now();
               processingVideo.currentTime = currentTime;
             };
 

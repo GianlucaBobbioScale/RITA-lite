@@ -84,11 +84,9 @@ class VideoProcessingQueue {
       if (pair) {
         pair.videos.forEach((video) => {
           video.status = 'uploaded';
-          video.data?.screenshots.forEach((screenshot) => {
-            const screenshotElement = document.createElement('img');
-            screenshotElement.src = screenshot;
-            videoContainer.appendChild(screenshotElement);
-          });
+          updateUpdatedVideo(video.id, pairIdArg);
+          // we clean the screenshots array to avoid memory leaks
+          video.data.screenshots.length = 0;
         });
       }
     };
