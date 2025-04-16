@@ -11,10 +11,7 @@ function main() {
   let dynamicHeaderLinks = ['styles.css'];
   if (window.location.protocol !== 'file:') {
     dynamicHeaderLinks = dynamicHeaderLinks.map((src) => {
-      return (
-        'https://cdn.jsdelivr.net/gh/GianlucaBobbioScale/RITA-lite@master/' +
-        src
-      );
+      return 'https://gianlucabobbioscale.github.io/RITA-lite/' + src;
     });
   }
   dynamicHeaderLinks.forEach((src) => {
