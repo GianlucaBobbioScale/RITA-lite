@@ -79,7 +79,7 @@ class VideoProcessingQueue {
     this.nextQueue = [];
     this.allQueue = [];
     this.processing = new Set();
-    window.onRITAVideoUploaded = (pairIdArg) => {
+    window.onRITAVideoUploaded = (pairIdArg, taskId) => {
       console.log('uploaded pair', pairIdArg);
       const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
       if (pair) {
@@ -90,6 +90,13 @@ class VideoProcessingQueue {
           // we clean the screenshots array to avoid memory leaks
           video.data.screenshots.length = 0;
         });
+        const pairContainer = document.getElementById(
+          `video-pair-${pairIdArg}`
+        );
+        const taskIdElement = document.createElement('div');
+        taskIdElement.textContent = `Task ID: ${taskId}`;
+        taskIdElement.className = 'task-id';
+        pairContainer.appendChild(taskIdElement);
       }
     };
   }
