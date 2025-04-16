@@ -38,7 +38,7 @@ async function processVideo(
 ) {
   const video = videoProcessingQueue.allQueue
     .find(({ pairId }) => pairId === pairId)
-    .videos.find(({ id }) => id === id);
+    .videos.find(({ id: videoId }) => videoId === id);
   video.data = video.data || {};
   video.data.checksum = await getFileChecksum(file);
   video.data.screenshots = video.data.screenshots || [];
@@ -178,7 +178,7 @@ async function processVideo(
           1024
         ).toFixed(2)} MB)`;
 
-        displayVideo.style.display = 'none';
+        // displayVideo.style.display = 'none';
         // carrousel.src = URL.createObjectURL(video.data.screenshots[0]);
         // carrousel.style.display = 'block';
 
