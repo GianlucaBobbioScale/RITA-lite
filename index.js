@@ -8,13 +8,16 @@ function main() {
   logo.className = 'logo';
   logo.textContent = 'RITA-lite';
 
+  const staticHeaderLinks = [
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
+  ];
   let dynamicHeaderLinks = ['styles.css'];
   if (window.location.protocol !== 'file:') {
     dynamicHeaderLinks = dynamicHeaderLinks.map((src) => {
       return 'https://gianlucabobbioscale.github.io/RITA-lite/' + src;
     });
   }
-  dynamicHeaderLinks.forEach((src) => {
+  [...staticHeaderLinks, ...dynamicHeaderLinks].forEach((src) => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = src;
@@ -169,7 +172,6 @@ function main() {
     'https://cdn.jsdelivr.net/gh/antimatter15/whammy/whammy.js',
   ];
   let dynamicScripts = [
-    'js/audioProcessing.js',
     'js/videoProcessing.js',
     'js/uiHandlers.js',
     'js/main.js',

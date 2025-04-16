@@ -27,11 +27,13 @@ async function processVideo(
   playbackRate,
   invertedPlaybackRate
 ) {
-  const videoChecksum = await getFileChecksum(file);
+  const video = videoProcessingQueue.allQueue
+    .find(({ pairId }) => pairId === pairId)
+    .videos.find(({ id }) => id === id);
+  video.data = video.data || {};
+  video.data.checksum = await getFileChecksum(file);
 
   return new Promise((resolve) => {
-    let videoBlob;
-    let screenshots = [];
     let screenshotsSize = 0;
     const pairContainer = document.getElementById(`video-pair-${pairId}`);
 
@@ -63,7 +65,9 @@ async function processVideo(
     carrouselSlider.value = '0';
     carrouselSlider.style.display = 'none';
     carrouselSlider.addEventListener('input', (e) => {
-      carrousel.src = URL.createObjectURL(screenshots[e.target.value]);
+      carrousel.src = URL.createObjectURL(
+        video.data.screenshots[e.target.value]
+      );
     });
 
     const downloadButton = document.createElement('button');
@@ -147,12 +151,8 @@ async function processVideo(
       }
 
       const onFinishedProcessing = () => {
-        const processedVideo = {
-          id,
-          blob: videoBlob,
-          screenshots,
-          checksum: videoChecksum,
-        };
+        video.status = 'completed';
+
         processedVideos.push(processedVideo);
 
         const biggestVideoSize = document.getElementById('biggestVideoSize');
@@ -164,7 +164,7 @@ async function processVideo(
         document.body.removeChild(processingVideo);
         statusLabel.textContent = `Processing complete! (${processingTime.toFixed(
           2
-        )} seconds) (Screenshots: ${screenshots.length} ${(
+        )} seconds) (Screenshots: ${video.data.screenshots.length} ${(
           screenshotsSize /
           1024 /
           1024
@@ -173,193 +173,77 @@ async function processVideo(
         // Replace the display video with a carrousel of screenshots
         // change displayVideo from video to img
         displayVideo.style.display = 'none';
-        carrousel.src = URL.createObjectURL(screenshots[0]);
+        carrousel.src = URL.createObjectURL(video.data.screenshots[0]);
         carrousel.style.display = 'block';
 
-        carrouselSlider.src = URL.createObjectURL(screenshots[0]);
-        carrouselSlider.max = screenshots.length / step - 1;
+        carrouselSlider.src = URL.createObjectURL(video.data.screenshots[0]);
+        carrouselSlider.max = video.data.screenshots.length / step - 1;
         carrouselSlider.style.display = 'block';
-        window.onRITAVideoProcessed(processedVideo);
+        videoProcessingQueue.videoCompleted(pairId, id, processedVideo);
         resolve();
       };
 
       try {
-        if (useCurrentTimeMethod) {
-          // Create a canvas element
-          const canvas = document.createElement('canvas');
-          canvas.width = 640;
-          canvas.height =
-            (canvas.width * processingVideo.videoHeight) /
-            processingVideo.videoWidth;
-          canvas.style.display = 'none';
-          const ctx = canvas.getContext('2d');
-          document.body.appendChild(canvas);
+        // Create a canvas element
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height =
+          (canvas.width * processingVideo.videoHeight) /
+          processingVideo.videoWidth;
+        canvas.style.display = 'none';
+        const ctx = canvas.getContext('2d');
+        document.body.appendChild(canvas);
 
-          let currentTime = 0;
+        let currentTime = 0;
 
-          async function carrousel(screenshots) {
-            displayVideo.src = URL.createObjectURL(screenshots[0]);
-          }
-
-          async function screenshotsToJsonBinary(screenshots) {
-            function blobToBase64(blob) {
-              return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.readAsDataURL(blob);
-              });
-            }
-            const json = await Promise.all(
-              screenshots.map(async (blob) => {
-                const base64 = await blobToBase64(blob);
-                return { base64, size: blob.size, type: blob.type };
-              })
-            );
-
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(
-              new Blob([JSON.stringify(json)], { type: 'application/json' })
-            );
-            a.download = 'screenshots.json';
-            a.click();
-
-            return json;
-          }
-
-          async function captureFrames() {
-            const startTime = Date.now();
-            let seekedAskedTime;
-            return new Promise((resolve) => {
-              const captureNext = () => {
-                if (currentTime >= duration) {
-                  screenshotsToJsonBinary(screenshots);
-                  const endTime = Date.now();
-                  processingTime = (endTime - startTime) / 1000; // in seconds
-                  onFinishedProcessing();
-                  resolve();
-                  return;
-                }
-
-                const progress = currentTime / duration;
-
-                progressBar.style.width = `${Math.min(progress * 100, 100)}%`;
-
-                seekedAskedTime = Date.now();
-                processingVideo.currentTime = currentTime;
-              };
-
-              processingVideo.addEventListener('seeked', function onSeeked() {
-                const seekedStartTime = Date.now();
-
-                ctx.drawImage(
-                  processingVideo,
-                  0,
-                  0,
-                  canvas.width,
-                  canvas.height
-                );
-                canvas.toBlob(
-                  (blob) => {
-                    screenshots.push(blob);
-                    screenshotsSize += blob.size;
-                  },
-                  'image/webp',
-                  0.6
-                );
-                const seekedEndTime = Date.now();
-                const seekedTime = seekedEndTime - seekedStartTime;
-
-                currentTime += step;
-                setTimeout(captureNext, 100); // short delay to avoid overloading
-              });
-
-              captureNext();
-            });
-          }
-          captureFrames();
-        } else {
-          // else use the normal media recorder method
-          const useCanvas = new URL(window.location.href).searchParams.get(
-            'useCanvas'
-          );
-          console.log('useCanvas', useCanvas);
-          const highVideoBitsPerSecond = new URL(
-            window.location.href
-          ).searchParams.get('highVideoBitsPerSecond');
-          console.log('highVideoBitsPerSecond', highVideoBitsPerSecond);
-          const config = {
-            mimeType: selectedConfig.mimeType,
-            frameRate: 100,
-            ...(highVideoBitsPerSecond
-              ? {
-                  videoBitsPerSecond: 10_000_000,
-                }
-              : {}),
-          };
-          if (useCanvas) {
-            // Create a canvas element
-            const canvas = document.createElement('canvas');
-            canvas.width = 640;
-            canvas.height =
-              (640 / processingVideo.videoWidth) * processingVideo.videoHeight;
-            canvas.style.display = 'none';
-            const ctx = canvas.getContext('2d');
-            document.body.appendChild(canvas);
-
-            // Capture the canvas stream
-            const canvasStream = canvas.captureStream(100);
-
-            // Set up MediaRecorder with the canvas stream
-            mediaRecorder = new MediaRecorder(canvasStream, config);
-
-            // Draw video frames on the canvas
-            function drawFrame() {
-              ctx.drawImage(processingVideo, 0, 0, canvas.width, canvas.height);
-              requestAnimationFrame(drawFrame);
-            }
-
-            // Start drawing frames
-            drawFrame();
-          } else {
-            // if firefox
-            if (navigator.userAgent.includes('Firefox')) {
-              stream = processingVideo.mozCaptureStream();
-            } else {
-              stream = processingVideo.captureStream();
-            }
-            mediaRecorder = new MediaRecorder(stream, config);
-          }
-          const videoChunks = [];
-
-          mediaRecorder.ondataavailable = (e) => {
-            videoChunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = () => {
-            videoBlob = new Blob(videoChunks, {
-              type: selectedConfig.mimeType,
-            });
-            onFinishedProcessing();
-          };
-
-          let currentTime = 0;
-
-          processingVideo.playbackRate = playbackRate;
-          mediaRecorder.start();
-          processingVideo.muted = true;
-          processingVideo.play();
-
-          const progressInterval = setInterval(() => {
-            currentTime += 0.1;
-            const progress = (currentTime / targetDuration) * 100;
-            progressBar.style.width = `${Math.min(progress, 100)}%`;
-
-            if (currentTime >= targetDuration) {
-              clearInterval(progressInterval);
-              mediaRecorder.stop();
-            }
-          }, 100);
+        async function carrousel() {
+          displayVideo.src = URL.createObjectURL(video.data.screenshots[0]);
         }
+
+        async function captureFrames() {
+          const startTime = Date.now();
+          let seekedAskedTime;
+          return new Promise((resolve) => {
+            const captureNext = () => {
+              if (currentTime >= duration) {
+                const endTime = Date.now();
+                processingTime = (endTime - startTime) / 1000; // in seconds
+                onFinishedProcessing();
+                resolve();
+                return;
+              }
+
+              const progress = currentTime / duration;
+
+              progressBar.style.width = `${Math.min(progress * 100, 100)}%`;
+
+              seekedAskedTime = Date.now();
+              processingVideo.currentTime = currentTime;
+            };
+
+            processingVideo.addEventListener('seeked', function onSeeked() {
+              const seekedStartTime = Date.now();
+
+              ctx.drawImage(processingVideo, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob(
+                (blob) => {
+                  video.data.screenshots.push(blob);
+                  screenshotsSize += blob.size;
+                },
+                'image/webp',
+                0.6
+              );
+              const seekedEndTime = Date.now();
+              const seekedTime = seekedEndTime - seekedStartTime;
+
+              currentTime += step;
+              setTimeout(captureNext, 100); // short delay to avoid overloading
+            });
+
+            captureNext();
+          });
+        }
+        captureFrames();
       } catch (e) {
         statusLabel.textContent = 'Error: Failed to create MediaRecorder';
         console.error('MediaRecorder error:', e);

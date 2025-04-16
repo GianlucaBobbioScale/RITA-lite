@@ -76,8 +76,22 @@ const concurrentPairProcessing = 1;
 class VideoProcessingQueue {
   constructor(maxConcurrent = 1) {
     this.maxConcurrent = maxConcurrent;
-    this.queue = [];
+    this.nextQueue = [];
+    this.allQueue = [];
     this.processing = new Set();
+    window.onRITAVideoUploaded = (pairIdArg) => {
+      const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
+      if (pair) {
+        pair.videos.forEach((video) => {
+          video.status = 'uploaded';
+          video.data?.screenshots.forEach((screenshot) => {
+            const screenshotElement = document.createElement('img');
+            screenshotElement.src = screenshot;
+            videoContainer.appendChild(screenshotElement);
+          });
+        });
+      }
+    };
   }
 
   async add(pairId, processFn, videos) {
@@ -85,23 +99,37 @@ class VideoProcessingQueue {
       videos.forEach(({ file, id }) => {
         addVideoOnQueue(file, id, pairId);
       });
-      this.queue.push({ pairId, processFn, resolve });
+      this.nextQueue.push({ pairId, processFn, resolve });
+      this.allQueue.push({
+        pairId,
+        videos: videos.map(({ id }) => ({ id, status: 'queued', file })),
+      });
       this.processNext();
     });
   }
 
+  async videoCompleted(pairIdArg) {
+    const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
+    if (pair.videos.every(({ status }) => status === 'completed')) {
+      window.onRITAVideoProcessed?.(pair);
+    }
+  }
+
   async processNext() {
-    console.log('processing next', this.processing.size, this.queue.length);
-    if (this.processing.size >= this.maxConcurrent || this.queue.length === 0) {
+    console.log('processing next', this.processing.size, this.nextQueue.length);
+    if (
+      this.processing.size >= this.maxConcurrent ||
+      this.nextQueue.length === 0
+    ) {
       console.log(
         'not processing next',
         this.processing.size,
-        this.queue.length
+        this.nextQueue.length
       );
       return;
     }
 
-    const { pairId, processFn, resolve } = this.queue.shift();
+    const { pairId, processFn, resolve } = this.nextQueue.shift();
     this.processing.add(pairId);
 
     try {
