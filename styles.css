@@ -215,7 +215,7 @@ video {
 .pair-videos {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
+  gap: 2rem;
   margin-bottom: 1rem;
 }
 

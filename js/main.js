@@ -90,9 +90,7 @@ class VideoProcessingQueue {
           // we clean the screenshots array to avoid memory leaks
           video.data.screenshots.length = 0;
         });
-        const pairContainer = document.getElementById(
-          `video-pair-${pairIdArg}`
-        );
+        const pairContainer = document.getElementById(`pair-card-${pairIdArg}`);
         const taskIdElement = document.createElement('div');
         const duration = Math.min(
           ...pair.videos.map(({ data }) => data.duration)
