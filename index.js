@@ -132,7 +132,7 @@ function main() {
   pairSection.style.display = 'none';
   const pairTitle = document.createElement('div');
   pairTitle.className = 'section-title';
-  pairTitle.textContent = 'Pair Videos';
+  pairTitle.textContent = 'Paired Videos';
   const pairCard = document.createElement('div');
   pairCard.className = 'pair-card';
   pairCard.id = 'pairCard';
