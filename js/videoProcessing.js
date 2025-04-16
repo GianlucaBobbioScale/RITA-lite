@@ -1,3 +1,25 @@
+async function addVideoOnQueue(file, id, pairId) {
+  const pairContainer = document.getElementById(`video-pair-${pairId}`);
+  const videoContainer = document.createElement('div');
+  videoContainer.className = 'pair-video';
+  videoContainer.id = `processing-video-${pairId}-${id}`;
+
+  // Create visible video element for the pair
+  const displayVideo = document.createElement('video');
+  displayVideo.className = 'thumbnail';
+  displayVideo.loading = 'lazy';
+  displayVideo.preload = 'metadata';
+  displayVideo.src = URL.createObjectURL(file);
+  displayVideo.controls = false;
+
+  const statusLabel = document.createElement('div');
+  statusLabel.className = 'processing-label';
+  statusLabel.textContent = `Video on queue`;
+
+  videoContainer.appendChild(displayVideo);
+  videoContainer.appendChild(statusLabel);
+  pairContainer.appendChild(videoContainer);
+}
 async function processVideo(
   file,
   id,
@@ -6,9 +28,11 @@ async function processVideo(
   invertedPlaybackRate
 ) {
   const videoChecksum = await getFileChecksum(file);
-  // const videoDuration = await getVideoDuration(file);
+
   return new Promise((resolve) => {
     let videoBlob;
+    let screenshots = [];
+    let screenshotsSize = 0;
     const pairContainer = document.getElementById(`video-pair-${pairId}`);
 
     const useCurrentTimeMethod = true;
@@ -18,15 +42,29 @@ async function processVideo(
       invertedPlaybackRate = 1 / playbackRate;
     }
 
-    const videoContainer = document.createElement('div');
-    videoContainer.className = 'pair-video';
-    videoContainer.id = `processing-video-${pairId}-${id}`;
+    const videoContainer = document.getElementById(
+      `processing-video-${pairId}-${id}`
+    );
 
     // Create visible video element for the pair
-    const displayVideo = document.createElement('video');
-    displayVideo.className = 'thumbnail';
-    displayVideo.src = URL.createObjectURL(file);
-    displayVideo.controls = false;
+    const displayVideo = pairContainer.querySelector(
+      `#processing-video-${pairId}-${id} video`
+    );
+
+    const carrousel = document.createElement('img');
+    carrousel.className = 'carrousel';
+    carrousel.style.display = 'none';
+
+    const carrouselSlider = document.createElement('input');
+    carrouselSlider.className = 'carrousel-slider';
+    carrouselSlider.type = 'range';
+    carrouselSlider.min = '0';
+    carrouselSlider.max = '100';
+    carrouselSlider.value = '0';
+    carrouselSlider.style.display = 'none';
+    carrouselSlider.addEventListener('input', (e) => {
+      carrousel.src = URL.createObjectURL(screenshots[e.target.value]);
+    });
 
     const downloadButton = document.createElement('button');
     downloadButton.textContent = 'Download video';
@@ -44,8 +82,9 @@ async function processVideo(
     progressBar.className = 'progress-bar';
     progressContainer.appendChild(progressBar);
 
-    const statusLabel = document.createElement('div');
-    statusLabel.className = 'processing-label';
+    const statusLabel = pairContainer.querySelector(
+      `#processing-video-${pairId}-${id} .processing-label`
+    );
     statusLabel.textContent = `Processing at ${playbackRate}x...`;
 
     const dimensionsLabel = document.createElement('div');
@@ -55,7 +94,9 @@ async function processVideo(
     checksumLabel.className = 'checksum-label';
     checksumLabel.textContent = `Checksum: ${videoChecksum}`;
 
-    videoContainer.appendChild(displayVideo);
+    videoContainer.removeChild(statusLabel);
+    videoContainer.appendChild(carrousel);
+    videoContainer.appendChild(carrouselSlider);
     videoContainer.appendChild(progressContainer);
     videoContainer.appendChild(statusLabel);
     videoContainer.appendChild(dimensionsLabel);
@@ -70,10 +111,11 @@ async function processVideo(
     document.body.appendChild(processingVideo);
 
     let fps = 0;
-    processingVideo.ontimeupdate = () => {
-      const stats = processingVideo.getVideoPlaybackQuality();
-      fps = stats.totalVideoFrames / processingVideo.currentTime;
-    };
+    getVideoFPS(file).then((returnedFPS) => {
+      fps = returnedFPS;
+    });
+    let processingTime = 0;
+    const step = 1;
 
     processingVideo.onloadedmetadata = () => {
       let mediaRecorder;
@@ -108,13 +150,9 @@ async function processVideo(
         processedVideos.push({
           id,
           blob: videoBlob,
+          screenshots,
           checksum: videoChecksum,
         });
-
-        // Calculate total size of all processed videos
-        biggetVideosBlobSizes =
-          processedVideos.reduce((total, video) => total + video.blob.size, 0) /
-          (1024 * 1024); // Convert to MB
 
         const biggestVideoSize = document.getElementById('biggestVideoSize');
         biggestVideoSize.textContent = `${biggetVideosBlobSizes.toFixed(2)} MB`;
@@ -123,41 +161,29 @@ async function processVideo(
           processingVideo.videoWidth
         }x${processingVideo.videoHeight} @ ${fps.toFixed(2)} FPS`;
         document.body.removeChild(processingVideo);
-        statusLabel.textContent = `Processing complete ${playbackRate}x! (${targetDuration.toFixed(
+        statusLabel.textContent = `Processing complete ${playbackRate}x! (${processingTime.toFixed(
           2
-        )} seconds) (${(videoBlob.size / 1024 / 1024).toFixed(2)} MB)`;
+        )} seconds) (Screenshots: ${screenshots.length} ${(
+          screenshotsSize /
+          1024 /
+          1024
+        ).toFixed(2)} MB)`;
 
-        // Replace the display video with the processed video blob
-        displayVideo.src = URL.createObjectURL(videoBlob);
-        displayVideo.onloadedmetadata = () => {
-          const processedDuration = displayVideo.duration;
-          const durationDiffInSeconds = Math.abs(
-            processedDuration - targetDuration
-          );
+        // Replace the display video with a carrousel of screenshots
+        // change displayVideo from video to img
+        displayVideo.style.display = 'none';
+        carrousel.src = URL.createObjectURL(screenshots[0]);
+        carrousel.style.display = 'block';
 
-          if (durationDiffInSeconds > playbackRate * 1.5) {
-            // Allow 5 seconds tolerance
-            statusLabel.textContent = `Warning: Duration mismatch! Expected ${targetDuration.toFixed(
-              2
-            )}s, got ${processedDuration.toFixed(2)}s`;
-          } else {
-            console.log('Duration is good!');
-          }
-        };
-        // displayVideo.playbackRate = invertedPlaybackRate;
-        displayVideo.controls = true;
+        carrouselSlider.src = URL.createObjectURL(screenshots[0]);
+        carrouselSlider.max = screenshots.length / step - 1;
+        carrouselSlider.style.display = 'block';
         resolve();
       };
-
-      const useCurrentTimeMethod = new URL(
-        window.location.href
-      ).searchParams.get('useTimer');
-      console.log('useCurrentTimeMethod', useCurrentTimeMethod);
 
       try {
         if (useCurrentTimeMethod) {
           // Create a canvas element
-          const screenshots = [];
           const canvas = document.createElement('canvas');
           canvas.width = 640;
           canvas.height =
@@ -167,39 +193,47 @@ async function processVideo(
           const ctx = canvas.getContext('2d');
           document.body.appendChild(canvas);
 
-          const step = 1;
           let currentTime = 0;
 
-          async function createVideoFromImages(images, fps = 4) {
-            const encoder = new Whammy.Video(fps);
+          async function carrousel(screenshots) {
+            displayVideo.src = URL.createObjectURL(screenshots[0]);
+          }
 
-            for (let imgSrc of images) {
-              const image = new Image();
-              image.src = imgSrc;
-              await new Promise((res) => (image.onload = res));
-
-              // draw to temp canvas
-              const tempCanvas = document.createElement('canvas');
-              tempCanvas.width = image.width;
-              tempCanvas.height = image.height;
-              const tempCtx = tempCanvas.getContext('2d');
-              tempCtx.drawImage(image, 0, 0);
-
-              // add frame as canvas
-              encoder.add(tempCanvas);
+          async function screenshotsToJsonBinary(screenshots) {
+            function blobToBase64(blob) {
+              return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+              });
             }
+            const json = await Promise.all(
+              screenshots.map(async (blob) => {
+                const base64 = await blobToBase64(blob);
+                return { base64, size: blob.size, type: blob.type };
+              })
+            );
 
-            encoder.compile(false, (output) => {
-              videoBlob = output;
-              onFinishedProcessing();
-            });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(
+              new Blob([JSON.stringify(json)], { type: 'application/json' })
+            );
+            a.download = 'screenshots.json';
+            a.click();
+
+            return json;
           }
 
           async function captureFrames() {
+            const startTime = Date.now();
+            let seekedAskedTime;
             return new Promise((resolve) => {
               const captureNext = () => {
                 if (currentTime >= duration) {
-                  createVideoFromImages(screenshots);
+                  screenshotsToJsonBinary(screenshots);
+                  const endTime = Date.now();
+                  processingTime = (endTime - startTime) / 1000; // in seconds
+                  onFinishedProcessing();
                   resolve();
                   return;
                 }
@@ -208,26 +242,34 @@ async function processVideo(
 
                 progressBar.style.width = `${Math.min(progress * 100, 100)}%`;
 
+                seekedAskedTime = Date.now();
                 processingVideo.currentTime = currentTime;
-
-                processingVideo.addEventListener('seeked', function onSeeked() {
-                  processingVideo.removeEventListener('seeked', onSeeked);
-
-                  ctx.drawImage(
-                    processingVideo,
-                    0,
-                    0,
-                    canvas.width,
-                    canvas.height
-                  );
-                  canvas.toBlob((blob) => {
-                    screenshots.push(URL.createObjectURL(blob));
-                  }, 'image/png');
-
-                  currentTime += step;
-                  setTimeout(captureNext, 200); // short delay to avoid overloading
-                });
               };
+
+              processingVideo.addEventListener('seeked', function onSeeked() {
+                const seekedStartTime = Date.now();
+
+                ctx.drawImage(
+                  processingVideo,
+                  0,
+                  0,
+                  canvas.width,
+                  canvas.height
+                );
+                canvas.toBlob(
+                  (blob) => {
+                    screenshots.push(blob);
+                    screenshotsSize += blob.size;
+                  },
+                  'image/webp',
+                  0.6
+                );
+                const seekedEndTime = Date.now();
+                const seekedTime = seekedEndTime - seekedStartTime;
+
+                currentTime += step;
+                setTimeout(captureNext, 100); // short delay to avoid overloading
+              });
 
               captureNext();
             });
@@ -277,7 +319,12 @@ async function processVideo(
             // Start drawing frames
             drawFrame();
           } else {
-            stream = processingVideo.mozCaptureStream();
+            // if firefox
+            if (navigator.userAgent.includes('Firefox')) {
+              stream = processingVideo.mozCaptureStream();
+            } else {
+              stream = processingVideo.captureStream();
+            }
             mediaRecorder = new MediaRecorder(stream, config);
           }
           const videoChunks = [];
@@ -321,17 +368,6 @@ async function processVideo(
   });
 }
 
-// async function getVideoDuration(file) {
-//   return new Promise((resolve) => {
-//     const video = document.createElement('video');
-//     video.preload = 'metadata';
-//     video.onloadedmetadata = () => {
-//       resolve(video.duration);
-//     };
-//     video.src = URL.createObjectURL(file);
-//   });
-// }
-
 // Get the checksum of a file only over the first MB
 async function getFileChecksum(file) {
   const arrayBuffer = await file.slice(0, 1024 * 1024).arrayBuffer();
@@ -339,4 +375,21 @@ async function getFileChecksum(file) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', uint8Array);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function getVideoFPS(file) {
+  return new Promise(async (resolve) => {
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(file);
+    video.muted = true;
+    await video.play();
+    // play for 5 seconds
+    setTimeout(() => {
+      video.pause();
+      const fps =
+        video.getVideoPlaybackQuality().totalVideoFrames / video.currentTime;
+
+      resolve(fps);
+    }, 5000);
+  });
 }

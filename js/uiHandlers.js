@@ -17,16 +17,31 @@ videoInput.addEventListener('change', (e) => {
 
     const video = document.createElement('video');
     video.className = 'thumbnail';
+    video.loading = 'lazy';
+    video.preload = 'metadata';
     video.src = URL.createObjectURL(file);
     video.controls = true;
+
+    const bottomBar = document.createElement('div');
+    bottomBar.className = 'bottom-bar';
 
     const fileName = document.createElement('div');
     fileName.className = 'processing-label';
     fileName.textContent = file.name;
 
+    const trashIcon = document.createElement('i');
+    trashIcon.className = 'fas fa-trash-alt';
+    trashIcon.style.color = 'var(--error-color)';
+    trashIcon.style.cursor = 'pointer';
+    trashIcon.onclick = () => removeVideo(id);
+
+    fileName.appendChild(trashIcon);
+
     videoItem.appendChild(checkbox);
     videoItem.appendChild(video);
-    videoItem.appendChild(fileName);
+    videoItem.appendChild(bottomBar);
+    bottomBar.appendChild(fileName);
+    bottomBar.appendChild(trashIcon);
     videoContainer.appendChild(videoItem);
   });
   pairSection.style.display = 'block';
@@ -324,8 +339,29 @@ pairVideos.addEventListener('click', async () => {
     videoItem.classList.remove('selected');
   });
 
-  const processingPromises = pairedVideos.map(({ file, id }) =>
-    processVideo(file, id, pairId, usedPlaybackRate, usedInvertedPlaybackRate)
+  // Add to processing queue
+  await videoProcessingQueue.add(
+    pairId,
+    async () => {
+      const processingPromises = pairedVideos.map(({ file, id }) =>
+        processVideo(
+          file,
+          id,
+          pairId,
+          usedPlaybackRate,
+          usedInvertedPlaybackRate
+        )
+      );
+      await Promise.all(processingPromises);
+    },
+    pairedVideos.map(({ file, id }) => ({ file, id }))
   );
-  await Promise.all(processingPromises);
 });
+
+// Function to remove a video
+function removeVideo(id) {
+  const videoItem = document.getElementById(`video-item-${id}`);
+  videoContainer.removeChild(videoItem);
+  videoFiles = videoFiles.filter((v) => v.id !== id);
+  selectedVideos = selectedVideos.filter((v) => v.id !== id);
+}

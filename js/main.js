@@ -70,6 +70,49 @@ let playbackRate = 4;
 let invertedPlaybackRate = 1 / playbackRate;
 const downsampledWidth = 640;
 const ctx = new AudioContext();
+const concurrentPairProcessing = 1;
+
+// Queue manager for video processing
+class VideoProcessingQueue {
+  constructor(maxConcurrent = 1) {
+    this.maxConcurrent = maxConcurrent;
+    this.queue = [];
+    this.processing = new Set();
+  }
+
+  async add(pairId, processFn, videos) {
+    return new Promise((resolve) => {
+      videos.forEach(({ file, id }) => {
+        addVideoOnQueue(file, id, pairId);
+      });
+      this.queue.push({ pairId, processFn, resolve });
+      this.processNext();
+    });
+  }
+
+  async processNext() {
+    console.log('processing next', this.processing.size, this.queue.length);
+    if (this.processing.size >= this.maxConcurrent || this.queue.length === 0) {
+      console.log(
+        'not processing next',
+        this.processing.size,
+        this.queue.length
+      );
+      return;
+    }
+
+    const { pairId, processFn, resolve } = this.queue.shift();
+    this.processing.add(pairId);
+
+    try {
+      await processFn();
+    } finally {
+      this.processing.delete(pairId);
+      resolve();
+      this.processNext();
+    }
+  }
+}
 
 // Global state
 let videoFiles = [];
@@ -78,6 +121,7 @@ let processedVideos = [];
 let processedAudios = [];
 let pairCount = 0;
 let biggetVideosBlobSizes = 0;
+const videoProcessingQueue = new VideoProcessingQueue(concurrentPairProcessing);
 
 // Call the function to display specs
 displayUserSpecs();
