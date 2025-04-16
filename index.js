@@ -164,6 +164,8 @@ function main() {
 
   document.body.appendChild(mainContent);
 
+  const timestamp = new Date().getTime();
+
   // Add script elements
   const scripts = [
     'https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/index.min.js',
@@ -184,6 +186,8 @@ function main() {
         src
       );
     });
+  } else {
+    dynamicScripts = dynamicScripts.map((src) => src + '?v=' + timestamp);
   }
   scripts.forEach((src) => {
     const script = document.createElement('script');
