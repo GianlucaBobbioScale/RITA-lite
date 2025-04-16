@@ -80,10 +80,12 @@ class VideoProcessingQueue {
     this.allQueue = [];
     this.processing = new Set();
     window.onRITAVideoUploaded = (pairIdArg) => {
+      console.log('uploaded pair', pairIdArg);
       const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
       if (pair) {
         pair.videos.forEach((video) => {
           video.status = 'uploaded';
+          console.log('video to mark as uploaded', video.id, pairIdArg);
           updateUpdatedVideo(video.id, pairIdArg);
           // we clean the screenshots array to avoid memory leaks
           video.data.screenshots.length = 0;

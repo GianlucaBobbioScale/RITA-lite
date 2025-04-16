@@ -22,6 +22,7 @@ async function addVideoOnQueue(file, id, pairId) {
 }
 
 async function updateUpdatedVideo(id, pairId) {
+  console.log('updating video', id, pairId);
   const statusLabel = document.getElementById(
     `processing-video-${pairId}-${id} .processing-label`
   );
@@ -134,6 +135,7 @@ async function processVideo(
       let mediaRecorder;
       let stream;
       const duration = processingVideo.duration;
+      video.data.duration = duration;
       const targetDuration = duration / playbackRate;
 
       // Try different codec configurations
