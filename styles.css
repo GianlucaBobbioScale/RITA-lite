@@ -220,7 +220,6 @@ video {
 }
 
 .pair-video {
-  /* border-radius: 0.75rem; */
   position: relative;
   overflow: hidden;
 }
