@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+function main() {
   // Create header
   const header = document.createElement('header');
   header.className = 'app-header';
@@ -195,4 +195,6 @@ document.addEventListener('DOMContentLoaded', function () {
     script.src = src;
     document.body.appendChild(script);
   });
-});
+}
+
+main();
