@@ -183,11 +183,11 @@ function main() {
     dynamicScripts = dynamicScripts.map((src) => {
       return (
         'https://cdn.jsdelivr.net/gh/GianlucaBobbioScale/RITA-lite@master/' +
-        src
+        src +
+        '?v=' +
+        timestamp
       );
     });
-  } else {
-    dynamicScripts = dynamicScripts.map((src) => src + '?v=' + timestamp);
   }
   scripts.forEach((src) => {
     const script = document.createElement('script');
