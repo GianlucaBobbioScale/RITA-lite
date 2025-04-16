@@ -102,7 +102,7 @@ class VideoProcessingQueue {
       this.nextQueue.push({ pairId, processFn, resolve });
       this.allQueue.push({
         pairId,
-        videos: videos.map(({ id }) => ({ id, status: 'queued', file })),
+        videos: videos.map(({ id }) => ({ id, status: 'queued' })),
       });
       this.processNext();
     });

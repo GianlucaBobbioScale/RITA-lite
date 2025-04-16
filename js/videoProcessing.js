@@ -32,7 +32,7 @@ async function processVideo(
     .videos.find(({ id }) => id === id);
   video.data = video.data || {};
   video.data.checksum = await getFileChecksum(file);
-
+  video.data.screenshots = video.data.screenshots || [];
   return new Promise((resolve) => {
     let screenshotsSize = 0;
     const pairContainer = document.getElementById(`video-pair-${pairId}`);
@@ -96,7 +96,7 @@ async function processVideo(
 
     const checksumLabel = document.createElement('div');
     checksumLabel.className = 'checksum-label';
-    checksumLabel.textContent = `Checksum: ${videoChecksum}`;
+    checksumLabel.textContent = `Checksum: ${video.data.checksum}`;
 
     videoContainer.removeChild(statusLabel);
     videoContainer.appendChild(carrousel);
@@ -152,9 +152,8 @@ async function processVideo(
 
       const onFinishedProcessing = () => {
         video.status = 'completed';
-
-        processedVideos.push(processedVideo);
-
+        video.data.fps = fps;
+        video.data.processingTime = processingTime;
         const biggestVideoSize = document.getElementById('biggestVideoSize');
         biggestVideoSize.textContent = `${biggetVideosBlobSizes.toFixed(2)} MB`;
 
@@ -179,7 +178,7 @@ async function processVideo(
         carrouselSlider.src = URL.createObjectURL(video.data.screenshots[0]);
         carrouselSlider.max = video.data.screenshots.length / step - 1;
         carrouselSlider.style.display = 'block';
-        videoProcessingQueue.videoCompleted(pairId, id, processedVideo);
+        videoProcessingQueue.videoCompleted(pairId);
         resolve();
       };
 
