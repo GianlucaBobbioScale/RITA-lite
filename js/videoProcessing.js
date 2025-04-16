@@ -23,11 +23,15 @@ async function addVideoOnQueue(file, id, pairId) {
 
 async function updateUpdatedVideo(id, pairId) {
   console.log('updating video', id, pairId);
-  const statusLabel = document.getElementById(
-    `processing-video-${pairId}-${id} .processing-label`
+  const statusLabel = document.querySelector(
+    `#processing-video-${pairId}-${id} .processing-label`
   );
   statusLabel.style.color = 'green';
   statusLabel.textContent = `Uploaded!`;
+  const dimensionsLabel = document.querySelector(
+    `#processing-video-${pairId}-${id} .dimensions-label`
+  );
+  dimensionsLabel.style.display = 'none';
 }
 
 async function processVideo(
@@ -80,16 +84,6 @@ async function processVideo(
       );
     });
 
-    const downloadButton = document.createElement('button');
-    downloadButton.textContent = 'Download video';
-    downloadButton.className = 'download-button';
-    downloadButton.style.display = 'none';
-    downloadButton.addEventListener('click', () => {
-      const a = document.createElement('a');
-      a.href = displayVideo.src;
-      a.download = 'output.webm';
-    });
-
     const progressContainer = document.createElement('div');
     progressContainer.className = 'progress-container';
     const progressBar = document.createElement('div');
@@ -115,7 +109,6 @@ async function processVideo(
     videoContainer.appendChild(statusLabel);
     videoContainer.appendChild(dimensionsLabel);
     videoContainer.appendChild(checksumLabel);
-    videoContainer.appendChild(downloadButton);
     pairContainer.appendChild(videoContainer);
 
     // Create hidden video element for processing
