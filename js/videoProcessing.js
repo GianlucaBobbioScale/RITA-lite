@@ -147,12 +147,13 @@ async function processVideo(
       }
 
       const onFinishedProcessing = () => {
-        processedVideos.push({
+        const processedVideo = {
           id,
           blob: videoBlob,
           screenshots,
           checksum: videoChecksum,
-        });
+        };
+        processedVideos.push(processedVideo);
 
         const biggestVideoSize = document.getElementById('biggestVideoSize');
         biggestVideoSize.textContent = `${biggetVideosBlobSizes.toFixed(2)} MB`;
@@ -178,6 +179,7 @@ async function processVideo(
         carrouselSlider.src = URL.createObjectURL(screenshots[0]);
         carrouselSlider.max = screenshots.length / step - 1;
         carrouselSlider.style.display = 'block';
+        window.onRITAVideoProcessed(processedVideo);
         resolve();
       };
 
