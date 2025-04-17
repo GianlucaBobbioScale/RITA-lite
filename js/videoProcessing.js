@@ -31,6 +31,10 @@ async function updateUpdatedVideo(id, pairId) {
   const dimensionsLabel = document.querySelector(
     `#processing-video-${pairId}-${id} .dimensions-label`
   );
+  const cancelButton = document.querySelector(
+    `#video-pair-${pairId} .pair-cancel-button`
+  );
+  cancelButton.style.display = 'none';
   dimensionsLabel.style.display = 'none';
 }
 
@@ -107,6 +111,7 @@ async function processVideo(
     checksumLabel.className = 'checksum-label';
     checksumLabel.textContent = `Checksum: ${video.data.checksum}`;
 
+    // Remove the cancel button from individual video
     videoContainer.removeChild(statusLabel);
     videoContainer.appendChild(carrousel);
     videoContainer.appendChild(carrouselSlider);
@@ -115,6 +120,22 @@ async function processVideo(
     videoContainer.appendChild(dimensionsLabel);
     videoContainer.appendChild(checksumLabel);
     pairContainer.appendChild(videoContainer);
+
+    let cancelButton = pairContainer.querySelector('.pair-cancel-button');
+
+    // Add cancel button to pair container if it doesn't exist
+    if (!cancelButton) {
+      cancelButton = document.createElement('div');
+      cancelButton.className = 'pair-cancel-button';
+      cancelButton.textContent = '🚫';
+      cancelButton.title = 'Cancel processing for both videos';
+
+      pairContainer.appendChild(cancelButton);
+    }
+
+    cancelButton.addEventListener('click', () => {
+      abortProcessing('cancelled by user');
+    });
 
     const abortProcessing = (reason) => {
       statusLabel.textContent = `Processing aborted: ${reason}`;

@@ -83,25 +83,42 @@ class VideoProcessingQueue {
     this.nextQueue = [];
     this.allQueue = [];
     this.processing = new Set();
-    window.onRITAVideoUploaded = (pairIdArg, taskId) => {
+    window.onRITAVideoUploaded = (pairIdArg, taskId, errorMessage) => {
       console.log('uploaded pair', pairIdArg);
       const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
       if (pair) {
         pair.videos.forEach((video) => {
-          video.status = 'uploaded';
+          video.status = errorMessage ? 'uploaded-error' : 'uploaded';
           console.log('video to mark as uploaded', video.id, pairIdArg);
-          updateUpdatedVideo(video.id, pairIdArg);
-          // we clean the screenshots array to avoid memory leaks
-          video.data.screenshots.length = 0;
+          if (!errorMessage) {
+            updateUpdatedVideo(video.id, pairIdArg);
+            // we clean the screenshots array to avoid memory leaks
+            video.data.screenshots.length = 0;
+          }
         });
         const pairContainer = document.getElementById(`pair-card-${pairIdArg}`);
         const taskIdElement = document.createElement('div');
         const duration = Math.min(
           ...pair.videos.map(({ data }) => data.duration)
         );
-        taskIdElement.textContent = `Task ID: ${taskId} - ${duration} seconds`;
-        taskIdElement.className = 'task-id';
-        pairContainer.appendChild(taskIdElement);
+        if (taskId) {
+          taskIdElement.textContent = `Task ID: ${taskId} - ${duration} seconds`;
+          taskIdElement.className = 'task-id';
+          pairContainer.appendChild(taskIdElement);
+        } else {
+          taskIdElement.textContent = `Error: ${
+            errorMessage || 'Unknown error'
+          }`;
+          taskIdElement.className = 'task-id';
+          pairContainer.appendChild(taskIdElement);
+          const retryButton = document.createElement('button');
+          retryButton.textContent = 'Retry';
+          retryButton.className = 'retry-button';
+          pairContainer.appendChild(retryButton);
+          retryButton.addEventListener('click', () => {
+            window.onRITAVideoProcessed?.(pairIdArg);
+          });
+        }
       }
     };
   }

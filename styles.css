@@ -217,6 +217,7 @@ video {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
   margin-bottom: 1rem;
+  position: relative;
 }
 
 .pair-video {
@@ -474,4 +475,24 @@ video {
   .warning-message {
     margin: 0.5rem 1rem;
   }
+}
+
+.pair-cancel-button {
+  position: absolute;
+  top: -2rem;
+  right: -2rem;
+  background-color: transparent;
+  color: transparent;
+  border: none;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2em;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 0px var(--error-color);
+  z-index: 10;
 }
