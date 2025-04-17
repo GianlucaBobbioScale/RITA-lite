@@ -107,7 +107,7 @@ class VideoProcessingQueue {
           ...pair.videos.map(({ data }) => data.duration)
         );
         if (taskId) {
-          taskIdElement.textContent = `Task ID: ${taskId} - ${duration} seconds`;
+          taskIdElement.textContent = `Internal ID: ${taskId} - ${duration} seconds`;
         } else {
           taskIdElement.textContent = `Error: ${
             errorMessage || 'Unknown error'
