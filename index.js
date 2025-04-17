@@ -6,7 +6,7 @@ function main() {
   headerContent.className = 'header-content';
   const logo = document.createElement('h1');
   logo.className = 'logo';
-  logo.textContent = 'RITA-lite';
+  logo.textContent = '🤖 RITA lite';
 
   const staticHeaderLinks = [];
   let dynamicHeaderLinks = ['styles.css'];

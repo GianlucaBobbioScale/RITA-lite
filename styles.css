@@ -1,6 +1,6 @@
 :root {
-  --primary-color: #6366f1;
-  --primary-hover: #4f46e5;
+  --primary-color: #317f8d;
+  --primary-hover: #215f6d;
   --secondary-color: #f8fafc;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
@@ -113,7 +113,7 @@ input[type='file'] {
 }
 
 .custom-file-input {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   background: var(--primary-color);
   color: white;
   border-radius: 0.5rem;
@@ -128,7 +128,7 @@ input[type='file'] {
 }
 
 button {
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 1rem;
   background: var(--primary-color);
   color: white;
   border: none;
