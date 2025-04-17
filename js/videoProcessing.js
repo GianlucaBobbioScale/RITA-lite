@@ -116,6 +116,14 @@ async function processVideo(
     videoContainer.appendChild(checksumLabel);
     pairContainer.appendChild(videoContainer);
 
+    const abortProcessing = (reason) => {
+      statusLabel.textContent = `Processing aborted: ${reason}`;
+      statusLabel.style.color = 'var(--error-color)';
+      video.status = 'aborted';
+      resolve();
+      return;
+    };
+
     // Create hidden video element for processing
     const processingVideo = document.createElement('video');
     processingVideo.src = URL.createObjectURL(file);
@@ -125,6 +133,12 @@ async function processVideo(
     let fps = 0;
     getVideoFPS(file).then((returnedFPS) => {
       fps = returnedFPS;
+      if (fps < checkCriterias.fps * 0.9) {
+        abortProcessing(
+          `Didn't meet 100 FPS criteria (Found ${Math.round(fps)}).`
+        );
+        return;
+      }
     });
     let processingTime = 0;
     const step = 1;
@@ -135,6 +149,13 @@ async function processVideo(
       const duration = processingVideo.duration;
       video.data.duration = duration;
       const targetDuration = duration / playbackRate;
+
+      if (processingVideo.videoWidth < checkCriterias.width * 0.9) {
+        abortProcessing(
+          `Didn't meet 3k criteria (Found ${processingVideo.videoWidth}px).`
+        );
+        return;
+      }
 
       // Try different codec configurations
       const codecConfigs = [
@@ -160,6 +181,10 @@ async function processVideo(
       }
 
       const onFinishedProcessing = () => {
+        if (video.status === 'aborted') {
+          resolve();
+          return;
+        }
         video.status = 'completed';
         video.data.fps = fps;
         video.data.processingTime = processingTime;
@@ -210,6 +235,10 @@ async function processVideo(
           const startTime = Date.now();
           return new Promise((resolve) => {
             const captureNext = () => {
+              if (video.status === 'aborted') {
+                resolve();
+                return;
+              }
               if (currentTime >= duration) {
                 const endTime = Date.now();
                 processingTime = (endTime - startTime) / 1000; // in seconds

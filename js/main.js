@@ -70,7 +70,11 @@ let playbackRate = 4;
 let invertedPlaybackRate = 1 / playbackRate;
 const downsampledWidth = 640;
 const ctx = new AudioContext();
-const concurrentPairProcessing = 1;
+const concurrentPairProcessing = 2;
+const checkCriterias = {
+  fps: 100,
+  width: 2944,
+};
 
 // Queue manager for video processing
 class VideoProcessingQueue {
