@@ -26,6 +26,13 @@ function main() {
   header.appendChild(headerContent);
   document.body.appendChild(header);
 
+  // Add warning message about keeping tab active
+  const warningMessage = document.createElement('div');
+  warningMessage.className = 'warning-message';
+  warningMessage.textContent =
+    '⚠️ Please keep this tab active while processing videos to ensure optimal performance.';
+  document.body.appendChild(warningMessage);
+
   // Create user specs div
   const userSpecs = document.createElement('div');
   userSpecs.className = 'user-specs';

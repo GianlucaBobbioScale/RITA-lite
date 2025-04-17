@@ -41,6 +41,11 @@ async function processVideo(
   playbackRate,
   invertedPlaybackRate
 ) {
+  try {
+    navigator.wakeLock?.request('screen').then((lock) => (wakeLock = lock));
+  } catch (err) {
+    console.log('Wake Lock not available');
+  }
   const video = videoProcessingQueue.allQueue
     .find(({ pairId: pairIdArg }) => pairIdArg === pairId)
     .videos.find(({ id: videoId }) => videoId === id);
