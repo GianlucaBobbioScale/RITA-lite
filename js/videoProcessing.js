@@ -42,7 +42,7 @@ async function processVideo(
   invertedPlaybackRate
 ) {
   const video = videoProcessingQueue.allQueue
-    .find(({ pairId }) => pairId === pairId)
+    .find(({ pairIdArg }) => pairIdArg === pairId)
     .videos.find(({ id: videoId }) => videoId === id);
   video.data = video.data || {};
   video.data.checksum = await getFileChecksum(file);
