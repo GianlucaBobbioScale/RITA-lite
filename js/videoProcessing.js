@@ -216,13 +216,11 @@ async function processVideo(
           processingVideo.videoWidth
         }x${processingVideo.videoHeight} @ ${fps.toFixed(2)} FPS`;
         document.body.removeChild(processingVideo);
-        statusLabel.textContent = `Uploading! (${processingTime.toFixed(
-          2
-        )} seconds) (Screenshots: ${video.data.screenshots.length} ${(
-          screenshotsSize /
-          1024 /
-          1024
-        ).toFixed(2)} MB)`;
+        statusLabel.textContent = `${
+          window.onRITAVideoProcessed ? 'Uploading!' : 'Completed!'
+        } (${processingTime.toFixed(2)} seconds) (Screenshots: ${
+          video.data.screenshots.length
+        } ${(screenshotsSize / 1024 / 1024).toFixed(2)} MB)`;
 
         // displayVideo.style.display = 'none';
         // carrousel.src = URL.createObjectURL(video.data.screenshots[0]);
