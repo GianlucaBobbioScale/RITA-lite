@@ -118,8 +118,7 @@ input[type='file'] {
   color: white;
   border-radius: 0.5rem;
   cursor: pointer;
-  font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.8rem;
   line-height: initial;
 }
 
@@ -133,9 +132,7 @@ button {
   color: white;
   border: none;
   border-radius: 0.5rem;
-  font-weight: 500;
   cursor: pointer;
-  font-size: 1rem;
 }
 
 button:hover {
@@ -495,4 +492,8 @@ video {
   justify-content: center;
   text-shadow: 0 0 0px var(--error-color);
   z-index: 10;
+}
+
+.retry-button {
+  margin-top: 1rem;
 }
