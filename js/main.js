@@ -97,27 +97,28 @@ class VideoProcessingQueue {
           }
         });
         const pairContainer = document.getElementById(`pair-card-${pairIdArg}`);
-        const taskIdElement = document.createElement('div');
+        let taskIdElement = pairContainer.querySelector('.task-id');
+        if (!taskIdElement) {
+          taskIdElement = document.createElement('div');
+          taskIdElement.className = 'task-id';
+          pairContainer.appendChild(taskIdElement);
+        }
         const duration = Math.min(
           ...pair.videos.map(({ data }) => data.duration)
         );
         if (taskId) {
           taskIdElement.textContent = `Task ID: ${taskId} - ${duration} seconds`;
-          taskIdElement.className = 'task-id';
-          pairContainer.appendChild(taskIdElement);
         } else {
           taskIdElement.textContent = `Error: ${
             errorMessage || 'Unknown error'
           }`;
-          taskIdElement.className = 'task-id';
-          pairContainer.appendChild(taskIdElement);
           let retryButton = pairContainer.querySelector('.retry-button');
           if (!retryButton) {
             retryButton = document.createElement('button');
-            retryButton.textContent = 'Retry';
             retryButton.className = 'retry-button';
             pairContainer.appendChild(retryButton);
           }
+          retryButton.textContent = 'Retry';
           retryButton.disabled = false;
           retryButton.addEventListener('click', () => {
             taskIdElement.textContent = 'Retrying upload...';
