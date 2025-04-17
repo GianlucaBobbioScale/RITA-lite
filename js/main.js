@@ -111,12 +111,19 @@ class VideoProcessingQueue {
           }`;
           taskIdElement.className = 'task-id';
           pairContainer.appendChild(taskIdElement);
-          const retryButton = document.createElement('button');
-          retryButton.textContent = 'Retry';
-          retryButton.className = 'retry-button';
-          pairContainer.appendChild(retryButton);
+          let retryButton = pairContainer.querySelector('.retry-button');
+          if (!retryButton) {
+            retryButton = document.createElement('button');
+            retryButton.textContent = 'Retry';
+            retryButton.className = 'retry-button';
+            pairContainer.appendChild(retryButton);
+          }
+          retryButton.disabled = false;
           retryButton.addEventListener('click', () => {
-            window.onRITAVideoProcessed?.(pairIdArg);
+            taskIdElement.textContent = 'Retrying upload...';
+            retryButton.textContent = 'Retrying...';
+            retryButton.disabled = true;
+            window.onRITAVideoProcessed?.(pair);
           });
         }
       }
