@@ -118,7 +118,7 @@ class VideoProcessingQueue {
             retryButton.className = 'retry-button';
             pairContainer.appendChild(retryButton);
           }
-          retryButton.textContent = 'Retry';
+          retryButton.textContent = 'Retry Upload';
           retryButton.disabled = false;
           retryButton.addEventListener('click', () => {
             taskIdElement.textContent = 'Retrying upload...';
