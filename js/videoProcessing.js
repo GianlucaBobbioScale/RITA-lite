@@ -226,7 +226,7 @@ async function processVideo(
 
         dimensionsLabel.textContent = `${duration.toFixed(2)}s ${
           processingVideo.videoWidth
-        }x${processingVideo.videoHeight} @ ${fps.toFixed(2)} FPS`;
+        }x${processingVideo.videoHeight} @ ${fps} FPS`;
         document.body.removeChild(processingVideo);
         statusLabel.textContent = `${
           window.onRITAVideoProcessed ? 'Uploading!' : 'Completed!'
