@@ -177,6 +177,7 @@ function main() {
   const scripts = [
     'https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/index.min.js',
     'https://cdn.jsdelivr.net/gh/antimatter15/whammy/whammy.js',
+    'https://unpkg.com/mediainfo.js',
   ];
   let dynamicScripts = [
     'js/videoProcessing.js',
