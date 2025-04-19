@@ -286,15 +286,15 @@ async function processVideo(
                 (blob) => {
                   video.data.screenshots.push(blob);
                   screenshotsSize += blob.size;
+                  const seekedEndTime = Date.now();
+                  const seekedTime = seekedEndTime - seekedStartTime;
+
+                  currentTime += step;
+                  setTimeout(captureNext, 100); // short delay to avoid overloading
                 },
                 'image/webp',
                 0.6
               );
-              const seekedEndTime = Date.now();
-              const seekedTime = seekedEndTime - seekedStartTime;
-
-              currentTime += step;
-              setTimeout(captureNext, 100); // short delay to avoid overloading
             });
 
             captureNext();
