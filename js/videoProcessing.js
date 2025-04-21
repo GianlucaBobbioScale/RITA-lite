@@ -210,7 +210,7 @@ async function processVideo(
           abortProcessing('No screenshots found');
           return;
         }
-        if (video.data.screenshots.length < Math.round(processingTime * 0.99)) {
+        if (video.data.screenshots.length < Math.round(duration * 0.99)) {
           abortProcessing(
             `Less screenshots than expected (${
               video.data.screenshots.length
