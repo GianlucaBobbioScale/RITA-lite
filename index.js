@@ -13,11 +13,11 @@ function main() {
   const staticHeaderLinks = [];
   let dynamicHeaderLinks = ['styles.css'];
   if (window.location.protocol !== 'file:') {
-    dynamicHeaderLinks = dynamicHeaderLinks.map((src) => {
+    dynamicHeaderLinks = dynamicHeaderLinks.map(src => {
       return 'https://gianlucabobbioscale.github.io/RITA-lite/' + src;
     });
   }
-  [...staticHeaderLinks, ...dynamicHeaderLinks].forEach((src) => {
+  [...staticHeaderLinks, ...dynamicHeaderLinks].forEach(src => {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = src;
@@ -54,11 +54,9 @@ function main() {
   const h2 = document.createElement('h2');
   h2.textContent = 'Browser Not Supported';
   const p1 = document.createElement('p');
-  p1.textContent =
-    'This application requires Firefox for optimal performance and compatibility.';
+  p1.textContent = 'This application requires Firefox for optimal performance and compatibility.';
   const p2 = document.createElement('p');
-  p2.textContent =
-    'Please download and use Firefox to access this application.';
+  p2.textContent = 'Please download and use Firefox to access this application.';
   const a = document.createElement('a');
   a.href = 'https://www.mozilla.org/firefox/new/';
   a.target = '_blank';
@@ -179,29 +177,20 @@ function main() {
     'https://cdn.jsdelivr.net/gh/antimatter15/whammy/whammy.js',
     'https://unpkg.com/mediainfo.js',
   ];
-  let dynamicScripts = [
-    'js/videoProcessing.js',
-    'js/uiHandlers.js',
-    'js/main.js',
-  ];
+  let dynamicScripts = ['js/videoProcessing.js', 'js/uiHandlers.js', 'js/main.js', 'js/logger.js'];
 
   // if scripts is run locally, use the local scripts
   if (window.location.protocol !== 'file:') {
-    dynamicScripts = dynamicScripts.map((src) => {
-      return (
-        'https://gianlucabobbioscale.github.io/RITA-lite/' +
-        src +
-        '?v=' +
-        timestamp
-      );
+    dynamicScripts = dynamicScripts.map(src => {
+      return 'https://gianlucabobbioscale.github.io/RITA-lite/' + src + '?v=' + timestamp;
     });
   }
-  scripts.forEach((src) => {
+  scripts.forEach(src => {
     const script = document.createElement('script');
     script.src = src;
     document.body.appendChild(script);
   });
-  dynamicScripts.forEach((src) => {
+  dynamicScripts.forEach(src => {
     const script = document.createElement('script');
     script.src = src;
     document.body.appendChild(script);

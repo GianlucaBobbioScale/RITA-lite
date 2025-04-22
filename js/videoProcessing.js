@@ -23,33 +23,23 @@ async function addVideoOnQueue(file, id, pairId) {
 }
 
 async function updateUpdatedVideo(id, pairId) {
-  console.log('updating video', id, pairId);
-  const statusLabel = document.querySelector(
-    `#processing-video-${pairId}-${id} .processing-label`
-  );
+  logger.info('updating video', id, pairId);
+  const statusLabel = document.querySelector(`#processing-video-${pairId}-${id} .processing-label`);
   statusLabel.style.color = 'green';
   statusLabel.textContent = `Uploaded!`;
   const dimensionsLabel = document.querySelector(
-    `#processing-video-${pairId}-${id} .dimensions-label`
+    `#processing-video-${pairId}-${id} .dimensions-label`,
   );
-  const cancelButton = document.querySelector(
-    `#video-pair-${pairId} .pair-cancel-button`
-  );
+  const cancelButton = document.querySelector(`#video-pair-${pairId} .pair-cancel-button`);
   cancelButton.style.display = 'none';
   dimensionsLabel.style.display = 'none';
 }
 
-async function processVideo(
-  file,
-  id,
-  pairId,
-  playbackRate,
-  invertedPlaybackRate
-) {
+async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate) {
   try {
-    navigator.wakeLock?.request('screen').then((lock) => (wakeLock = lock));
+    navigator.wakeLock?.request('screen').then(lock => (wakeLock = lock));
   } catch (err) {
-    console.log('Wake Lock not available');
+    logger.info('Wake Lock not available');
   }
   const video = videoProcessingQueue.allQueue
     .find(({ pairId: pairIdArg }) => pairIdArg === pairId)
@@ -57,7 +47,7 @@ async function processVideo(
   video.data = video.data || {};
   video.data.checksum = await getFileChecksum(file);
   video.data.screenshots = video.data.screenshots || [];
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     let screenshotsSize = 0;
     const pairContainer = document.getElementById(`video-pair-${pairId}`);
 
@@ -68,14 +58,10 @@ async function processVideo(
       invertedPlaybackRate = 1 / playbackRate;
     }
 
-    const videoContainer = document.getElementById(
-      `processing-video-${pairId}-${id}`
-    );
+    const videoContainer = document.getElementById(`processing-video-${pairId}-${id}`);
 
     // Create visible video element for the pair
-    const displayVideo = pairContainer.querySelector(
-      `#processing-video-${pairId}-${id} video`
-    );
+    const displayVideo = pairContainer.querySelector(`#processing-video-${pairId}-${id} video`);
 
     const carrousel = document.createElement('img');
     carrousel.className = 'carrousel';
@@ -88,10 +74,8 @@ async function processVideo(
     carrouselSlider.max = '100';
     carrouselSlider.value = '0';
     carrouselSlider.style.display = 'none';
-    carrouselSlider.addEventListener('input', (e) => {
-      carrousel.src = URL.createObjectURL(
-        video.data.screenshots[e.target.value]
-      );
+    carrouselSlider.addEventListener('input', e => {
+      carrousel.src = URL.createObjectURL(video.data.screenshots[e.target.value]);
     });
 
     const progressContainer = document.createElement('div');
@@ -101,7 +85,7 @@ async function processVideo(
     progressContainer.appendChild(progressBar);
 
     const statusLabel = pairContainer.querySelector(
-      `#processing-video-${pairId}-${id} .processing-label`
+      `#processing-video-${pairId}-${id} .processing-label`,
     );
     statusLabel.textContent = `Processing...`;
 
@@ -138,10 +122,11 @@ async function processVideo(
       abortProcessing('cancelled by user');
     });
 
-    const abortProcessing = (reason) => {
+    const abortProcessing = reason => {
       statusLabel.textContent = `Processing aborted: ${reason}`;
       statusLabel.style.color = 'var(--error-color)';
       video.status = 'aborted';
+      logger.error(`Processing aborted: ${reason}`);
       resolve();
       return;
     };
@@ -153,12 +138,10 @@ async function processVideo(
     document.body.appendChild(processingVideo);
 
     let fps = 0;
-    getVideoFPS(file).then((returnedFPS) => {
+    getVideoFPS(file).then(returnedFPS => {
       fps = returnedFPS;
       if (fps < checkCriterias.fps * 0.9) {
-        abortProcessing(
-          `Didn't meet 100 FPS criteria (Found ${Math.round(fps)}).`
-        );
+        abortProcessing(`Didn't meet 100 FPS criteria (Found ${Math.round(fps)}).`);
         return;
       }
     });
@@ -173,9 +156,7 @@ async function processVideo(
       const targetDuration = duration / playbackRate;
 
       if (processingVideo.videoWidth < checkCriterias.width * 0.9) {
-        abortProcessing(
-          `Didn't meet 3k criteria (Found ${processingVideo.videoWidth}px).`
-        );
+        abortProcessing(`Didn't meet 3k criteria (Found ${processingVideo.videoWidth}px).`);
         return;
       }
 
@@ -215,7 +196,7 @@ async function processVideo(
           abortProcessing(
             `Less screenshots than expected (${
               video.data.screenshots.length
-            } < ${Math.round(processingTime * 0.99)})`
+            } < ${Math.round(processingTime * 0.99)})`,
           );
           return;
         }
@@ -243,9 +224,7 @@ async function processVideo(
         // Create a canvas element
         const canvas = document.createElement('canvas');
         canvas.width = 640;
-        canvas.height =
-          (canvas.width * processingVideo.videoHeight) /
-          processingVideo.videoWidth;
+        canvas.height = (canvas.width * processingVideo.videoHeight) / processingVideo.videoWidth;
         canvas.style.display = 'none';
         const ctx = canvas.getContext('2d');
         document.body.appendChild(canvas);
@@ -258,7 +237,7 @@ async function processVideo(
 
         async function captureFrames() {
           const startTime = Date.now();
-          return new Promise((resolve) => {
+          return new Promise(resolve => {
             const captureNext = () => {
               if (video.status === 'aborted') {
                 resolve();
@@ -284,7 +263,7 @@ async function processVideo(
 
               ctx.drawImage(processingVideo, 0, 0, canvas.width, canvas.height);
               canvas.toBlob(
-                (blob) => {
+                blob => {
                   video.data.screenshots.push(blob);
                   screenshotsSize += blob.size;
                   const seekedEndTime = Date.now();
@@ -294,7 +273,7 @@ async function processVideo(
                   setTimeout(captureNext, 100); // short delay to avoid overloading
                 },
                 'image/webp',
-                0.6
+                0.6,
               );
             });
 
@@ -304,7 +283,7 @@ async function processVideo(
         captureFrames();
       } catch (e) {
         statusLabel.textContent = 'Error: Failed to create MediaRecorder';
-        console.error('MediaRecorder error:', e);
+        logger.error('MediaRecorder error:', e);
         resolve();
         return;
       }
@@ -318,18 +297,16 @@ async function getFileChecksum(file) {
   const uint8Array = new Uint8Array(arrayBuffer);
   const hashBuffer = await crypto.subtle.digest('SHA-256', uint8Array);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 async function getVideoFPS(file) {
-  return new Promise(async (resolve) => {
+  return new Promise(async resolve => {
     const readChunk = async (chunkSize, offset) => {
-      return new Uint8Array(
-        await file.slice(offset, offset + chunkSize).arrayBuffer()
-      );
+      return new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
     };
-    MediaInfo.mediaInfoFactory({ format: 'object' }, (mediainfo) => {
-      mediainfo.analyzeData(file.size, readChunk).then((result) => {
+    MediaInfo.mediaInfoFactory({ format: 'object' }, mediainfo => {
+      mediainfo.analyzeData(file.size, readChunk).then(result => {
         resolve(result.media.track[0].FrameRate);
       });
     });

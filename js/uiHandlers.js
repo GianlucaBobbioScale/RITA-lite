@@ -1,5 +1,5 @@
 // Handle video file input
-videoInput.addEventListener('change', (e) => {
+videoInput.addEventListener('change', e => {
   // videoFiles = Array.from(e.target.files);
   // videoContainer.innerHTML = '';
   Array.from(e.target.files).forEach((file, index) => {
@@ -56,20 +56,20 @@ function toggleVideoSelection(id) {
   const checkbox = document.getElementById(`checkbox-${id}`);
   const isSelected = checkbox.checked;
 
-  console.log(`Toggling selection for video ${id}, isSelected: ${isSelected}`);
-  console.log(`Current selectedVideos:`, selectedVideos);
+  logger.info(`Toggling selection for video ${id}, isSelected: ${isSelected}`);
+  logger.info(`Current selectedVideos:`, selectedVideos);
 
   if (isSelected) {
     videoItem.classList.add('selected');
-    if (!selectedVideos.some((v) => v.id === id)) {
-      const videoFile = videoFiles.find((v) => v.id === id);
+    if (!selectedVideos.some(v => v.id === id)) {
+      const videoFile = videoFiles.find(v => v.id === id);
       selectedVideos.push({ id, file: videoFile.file });
     }
   } else {
     videoItem.classList.remove('selected');
-    selectedVideos = selectedVideos.filter((v) => v.id !== id);
+    selectedVideos = selectedVideos.filter(v => v.id !== id);
   }
-  console.log(`Updated selectedVideos:`, selectedVideos);
+  logger.info(`Updated selectedVideos:`, selectedVideos);
 }
 
 function drawWaveform(canvas, signal, offset, color = '#4caf50') {
@@ -101,7 +101,7 @@ function drawWaveform(canvas, signal, offset, color = '#4caf50') {
   }
 
   // Apply signal enhancement
-  const enhancedSignal = preprocessedSignal.map((sample) => {
+  const enhancedSignal = preprocessedSignal.map(sample => {
     // Normalize to [-1, 1]
     const normalized = sample / maxSample;
     // Apply cubic transformation to enhance peaks
@@ -117,9 +117,7 @@ function drawWaveform(canvas, signal, offset, color = '#4caf50') {
     }
   }
 
-  const normalizedSignal = enhancedSignal.map(
-    (sample) => (sample / newMaxSample) * 0.8
-  );
+  const normalizedSignal = enhancedSignal.map(sample => (sample / newMaxSample) * 0.8);
 
   // Start drawing the waveform
   ctx.beginPath();
@@ -172,10 +170,7 @@ function estimatePitch(samples, sampleRate) {
   let prevSample = samples[0];
 
   for (let i = 1; i < samples.length; i++) {
-    if (
-      (prevSample < 0 && samples[i] >= 0) ||
-      (prevSample >= 0 && samples[i] < 0)
-    ) {
+    if ((prevSample < 0 && samples[i] >= 0) || (prevSample >= 0 && samples[i] < 0)) {
       zeroCrossings++;
     }
     prevSample = samples[i];
@@ -225,7 +220,7 @@ function findBestCorrelation(points1, points2, maxOffset = 5) {
     for (const point1 of points1) {
       // Find points in the second audio that are close in time (considering the offset)
       const matchingPoints = points2.filter(
-        (point2) => Math.abs(point2.time + offset - point1.time) < 0.1 // 100ms window
+        point2 => Math.abs(point2.time + offset - point1.time) < 0.1, // 100ms window
       );
 
       if (matchingPoints.length > 0) {
@@ -237,7 +232,7 @@ function findBestCorrelation(points1, points2, maxOffset = 5) {
             const score = 1 / (1 + pitchDiff + amplitudeDiff);
             return score > best.score ? { score, point: point2 } : best;
           },
-          { score: 0, point: null }
+          { score: 0, point: null },
         );
 
         correlation += bestMatch.score;
@@ -287,14 +282,12 @@ function preprocessSignal(signal) {
   filteredSignal[0] = smoothedSignal[0];
 
   for (let i = 1; i < smoothedSignal.length; i++) {
-    filteredSignal[i] =
-      alpha *
-      (filteredSignal[i - 1] + smoothedSignal[i] - smoothedSignal[i - 1]);
+    filteredSignal[i] = alpha * (filteredSignal[i - 1] + smoothedSignal[i] - smoothedSignal[i - 1]);
   }
 
   // Apply a simple threshold to remove very quiet parts
   const threshold = 0.05; // Reduced from 0.1 to preserve more of the signal
-  const thresholdedSignal = filteredSignal.map((sample) => {
+  const thresholdedSignal = filteredSignal.map(sample => {
     return Math.abs(sample) < threshold ? 0 : sample;
   });
 
@@ -306,9 +299,9 @@ pairVideos.addEventListener('click', async () => {
   const usedPlaybackRate = playbackRate;
   const usedInvertedPlaybackRate = 1 / usedPlaybackRate;
   const pairId = crypto.randomUUID();
-  console.log('Pair button clicked');
+  logger.info('Pair button clicked');
 
-  console.log('Filtered selectedVideos:', selectedVideos);
+  logger.info('Filtered selectedVideos:', selectedVideos);
 
   if (selectedVideos.length !== 2) {
     alert('Please select exactly 2 videos to pair');
@@ -347,17 +340,11 @@ pairVideos.addEventListener('click', async () => {
     pairId,
     async () => {
       const processingPromises = pairedVideos.map(({ file, id }) =>
-        processVideo(
-          file,
-          id,
-          pairId,
-          usedPlaybackRate,
-          usedInvertedPlaybackRate
-        )
+        processVideo(file, id, pairId, usedPlaybackRate, usedInvertedPlaybackRate),
       );
       await Promise.all(processingPromises);
     },
-    pairedVideos.map(({ file, id }) => ({ file, id }))
+    pairedVideos.map(({ file, id }) => ({ file, id })),
   );
 });
 
@@ -365,6 +352,6 @@ pairVideos.addEventListener('click', async () => {
 function removeVideo(id) {
   const videoItem = document.getElementById(`video-item-${id}`);
   videoContainer.removeChild(videoItem);
-  videoFiles = videoFiles.filter((v) => v.id !== id);
-  selectedVideos = selectedVideos.filter((v) => v.id !== id);
+  videoFiles = videoFiles.filter(v => v.id !== id);
+  selectedVideos = selectedVideos.filter(v => v.id !== id);
 }

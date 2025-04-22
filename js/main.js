@@ -38,13 +38,12 @@ function displayUserSpecs() {
   // Get WebGL information
   let webglInfo = 'WebGL not available';
   const canvas = document.createElement('canvas');
-  const gl =
-    canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (gl) {
     const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
     if (debugInfo) {
       webglInfo = `${gl.getParameter(
-        debugInfo.UNMASKED_VENDOR_WEBGL
+        debugInfo.UNMASKED_VENDOR_WEBGL,
       )} ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}`;
     }
   }
@@ -91,12 +90,12 @@ class VideoProcessingQueue {
     this.allQueue = [];
     this.processing = new Set();
     window.onRITAVideoUploaded = (pairIdArg, taskId, errorMessage) => {
-      console.log('uploaded pair', pairIdArg);
+      logger.info('uploaded pair', pairIdArg);
       const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
       if (pair) {
-        pair.videos.forEach((video) => {
+        pair.videos.forEach(video => {
           video.status = errorMessage ? 'uploaded-error' : 'uploaded';
-          console.log('video to mark as uploaded', video.id, pairIdArg);
+          logger.info('video to mark as uploaded', video.id, pairIdArg);
           if (!errorMessage) {
             updateUpdatedVideo(video.id, pairIdArg);
             // we clean the screenshots array to avoid memory leaks
@@ -110,15 +109,11 @@ class VideoProcessingQueue {
           taskIdElement.className = 'task-id';
           pairContainer.appendChild(taskIdElement);
         }
-        const duration = Math.min(
-          ...pair.videos.map(({ data }) => data.duration)
-        );
+        const duration = Math.min(...pair.videos.map(({ data }) => data.duration));
         if (taskId) {
           taskIdElement.textContent = `Internal ID: ${taskId} - ${duration} seconds`;
         } else {
-          taskIdElement.textContent = `Error: ${
-            errorMessage || 'Unknown error'
-          }`;
+          taskIdElement.textContent = `Error: ${errorMessage || 'Unknown error'}`;
           let retryButton = pairContainer.querySelector('.retry-button');
           if (!retryButton) {
             retryButton = document.createElement('button');
@@ -139,7 +134,7 @@ class VideoProcessingQueue {
   }
 
   async add(pairId, processFn, videos) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       videos.forEach(({ file, id }) => {
         addVideoOnQueue(file, id, pairId);
       });
@@ -160,16 +155,9 @@ class VideoProcessingQueue {
   }
 
   async processNext() {
-    console.log('processing next', this.processing.size, this.nextQueue.length);
-    if (
-      this.processing.size >= this.maxConcurrent ||
-      this.nextQueue.length === 0
-    ) {
-      console.log(
-        'not processing next',
-        this.processing.size,
-        this.nextQueue.length
-      );
+    logger.info('processing next', this.processing.size, this.nextQueue.length);
+    if (this.processing.size >= this.maxConcurrent || this.nextQueue.length === 0) {
+      logger.info('not processing next', this.processing.size, this.nextQueue.length);
       return;
     }
 
@@ -210,7 +198,7 @@ const playbackRateSlider = document.getElementById('playbackRate');
 const playbackRateValue = document.getElementById('playbackRateValue');
 
 // Update playback rate when slider changes
-playbackRateSlider.addEventListener('input', (e) => {
+playbackRateSlider.addEventListener('input', e => {
   playbackRate = parseFloat(e.target.value);
   invertedPlaybackRate = 1 / playbackRate;
   playbackRateValue.textContent = `${playbackRate.toFixed(1)}x`;
