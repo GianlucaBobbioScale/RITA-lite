@@ -1,3 +1,4 @@
+const videoProcessingVersion = '1.0.1';
 async function addVideoOnQueue(file, id, pairId) {
   const pairContainer = document.getElementById(`video-pair-${pairId}`);
   const videoContainer = document.createElement('div');

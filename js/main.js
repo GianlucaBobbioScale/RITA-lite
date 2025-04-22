@@ -51,6 +51,7 @@ function displayUserSpecs() {
     <p>CPU: ${cpuCores} cores</p>
     <p>Biggest video size: <span id="biggestVideoSize">${biggetVideosBlobSizes} MB</span></p>
     <p>WebGL: ${webglInfo}</p>
+    <p>VideoProcessingVersion: ${videoProcessingVersion || '1.0.0'}</p>
   `;
 
   userSpecs.innerHTML = specsHTML;
