@@ -3,12 +3,12 @@ const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
 const browserLanding = document.getElementById('browserLanding');
 const mainContent = document.getElementById('mainContent');
 
-if (!isFirefox) {
-  browserLanding.style.display = 'flex';
-  mainContent.style.display = 'none';
-  // Prevent any further script execution
-  throw new Error('Browser not supported');
-}
+// if (!isFirefox) {
+//   browserLanding.style.display = 'flex';
+//   mainContent.style.display = 'none';
+//   // Prevent any further script execution
+//   throw new Error('Browser not supported');
+// }
 
 function displayVideoProcessingVersionOnURL() {
   const url = new URL(window.location.href);
