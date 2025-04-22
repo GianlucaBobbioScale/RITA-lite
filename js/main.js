@@ -10,6 +10,12 @@ if (!isFirefox) {
   throw new Error('Browser not supported');
 }
 
+function displayVideoProcessingVersionOnURL() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('videoProcessingVersion', videoProcessingVersion);
+  window.history.replaceState({}, '', url);
+}
+
 // Display user specifications
 function displayUserSpecs() {
   const userSpecs = document.getElementById('userSpecs');
@@ -188,6 +194,8 @@ let processedAudios = [];
 let pairCount = 0;
 let biggetVideosBlobSizes = 0;
 const videoProcessingQueue = new VideoProcessingQueue(concurrentPairProcessing);
+
+displayVideoProcessingVersionOnURL();
 
 // Call the function to display specs
 displayUserSpecs();
