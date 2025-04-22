@@ -56,8 +56,8 @@ function toggleVideoSelection(id) {
   const checkbox = document.getElementById(`checkbox-${id}`);
   const isSelected = checkbox.checked;
 
-  logger.info(`Toggling selection for video ${id}, isSelected: ${isSelected}`);
-  logger.info(`Current selectedVideos:`, selectedVideos);
+  console.log(`Toggling selection for video ${id}, isSelected: ${isSelected}`);
+  console.log(`Current selectedVideos:`, selectedVideos);
 
   if (isSelected) {
     videoItem.classList.add('selected');
@@ -69,7 +69,7 @@ function toggleVideoSelection(id) {
     videoItem.classList.remove('selected');
     selectedVideos = selectedVideos.filter(v => v.id !== id);
   }
-  logger.info(`Updated selectedVideos:`, selectedVideos);
+  console.log(`Updated selectedVideos:`, selectedVideos);
 }
 
 function drawWaveform(canvas, signal, offset, color = '#4caf50') {
@@ -299,9 +299,9 @@ pairVideos.addEventListener('click', async () => {
   const usedPlaybackRate = playbackRate;
   const usedInvertedPlaybackRate = 1 / usedPlaybackRate;
   const pairId = crypto.randomUUID();
-  logger.info('Pair button clicked');
+  console.log('Pair button clicked');
 
-  logger.info('Filtered selectedVideos:', selectedVideos);
+  console.log('Filtered selectedVideos:', selectedVideos);
 
   if (selectedVideos.length !== 2) {
     alert('Please select exactly 2 videos to pair');

@@ -90,12 +90,12 @@ class VideoProcessingQueue {
     this.allQueue = [];
     this.processing = new Set();
     window.onRITAVideoUploaded = (pairIdArg, taskId, errorMessage) => {
-      logger.info('uploaded pair', pairIdArg);
+      console.log('uploaded pair', pairIdArg);
       const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
       if (pair) {
         pair.videos.forEach(video => {
           video.status = errorMessage ? 'uploaded-error' : 'uploaded';
-          logger.info('video to mark as uploaded', video.id, pairIdArg);
+          console.log('video to mark as uploaded', video.id, pairIdArg);
           if (!errorMessage) {
             updateUpdatedVideo(video.id, pairIdArg);
             // we clean the screenshots array to avoid memory leaks
@@ -155,9 +155,9 @@ class VideoProcessingQueue {
   }
 
   async processNext() {
-    logger.info('processing next', this.processing.size, this.nextQueue.length);
+    console.log('processing next', this.processing.size, this.nextQueue.length);
     if (this.processing.size >= this.maxConcurrent || this.nextQueue.length === 0) {
-      logger.info('not processing next', this.processing.size, this.nextQueue.length);
+      console.log('not processing next', this.processing.size, this.nextQueue.length);
       return;
     }
 
