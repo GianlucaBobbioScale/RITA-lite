@@ -23,7 +23,7 @@ async function addVideoOnQueue(file, id, pairId) {
 }
 
 async function updateUpdatedVideo(id, pairId) {
-  console.log('updating video', id, pairId);
+  logger.log('updating video', id, pairId);
   const statusLabel = document.querySelector(`#processing-video-${pairId}-${id} .processing-label`);
   statusLabel.style.color = 'green';
   statusLabel.textContent = `Uploaded!`;
@@ -39,7 +39,7 @@ async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate
   try {
     navigator.wakeLock?.request('screen').then(lock => (wakeLock = lock));
   } catch (err) {
-    console.log('Wake Lock not available');
+    logger.warn('Wake Lock not available');
   }
   const video = videoProcessingQueue.allQueue
     .find(({ pairId: pairIdArg }) => pairIdArg === pairId)
@@ -126,7 +126,7 @@ async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate
       statusLabel.textContent = `Processing aborted: ${reason}`;
       statusLabel.style.color = 'var(--error-color)';
       video.status = 'aborted';
-      console.error(`Processing aborted: ${reason}`);
+      logger.error(`Processing aborted: ${reason}`);
       resolve();
       return;
     };
