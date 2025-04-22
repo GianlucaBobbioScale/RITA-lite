@@ -1,41 +1,41 @@
 // Handle video file input
-videoInput.addEventListener("change", (e) => {
+videoInput.addEventListener('change', e => {
   // videoFiles = Array.from(e.target.files);
   // videoContainer.innerHTML = '';
   Array.from(e.target.files).forEach((file, index) => {
     const id = crypto.randomUUID();
     videoFiles.push({ id, file });
-    const videoItem = document.createElement("div");
-    videoItem.className = "video-item";
+    const videoItem = document.createElement('div');
+    videoItem.className = 'video-item';
     videoItem.id = `video-item-${id}`;
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "video-checkbox";
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'video-checkbox';
     checkbox.id = `checkbox-${id}`;
     checkbox.onchange = () => toggleVideoSelection(id);
 
-    const video = document.createElement("video");
-    video.className = "thumbnail";
-    video.loading = "lazy";
-    video.preload = "metadata";
+    const video = document.createElement('video');
+    video.className = 'thumbnail';
+    video.loading = 'lazy';
+    video.preload = 'metadata';
     video.src = URL.createObjectURL(file);
     video.controls = true;
 
-    const bottomBar = document.createElement("div");
-    bottomBar.className = "bottom-bar";
+    const bottomBar = document.createElement('div');
+    bottomBar.className = 'bottom-bar';
 
-    const fileName = document.createElement("div");
-    fileName.className = "processing-label";
+    const fileName = document.createElement('div');
+    fileName.className = 'processing-label';
     fileName.textContent = file.name;
 
-    const trashIcon = document.createElement("div");
-    trashIcon.className = "trash-icon";
-    trashIcon.style.color = "transparent";
-    trashIcon.style.textShadow = "0 0 0px var(--error-color)";
-    trashIcon.style.fontSize = "small";
-    trashIcon.textContent = "🚫";
-    trashIcon.style.cursor = "pointer";
+    const trashIcon = document.createElement('div');
+    trashIcon.className = 'trash-icon';
+    trashIcon.style.color = 'transparent';
+    trashIcon.style.textShadow = '0 0 0px var(--error-color)';
+    trashIcon.style.fontSize = 'small';
+    trashIcon.textContent = '🚫';
+    trashIcon.style.cursor = 'pointer';
     trashIcon.onclick = () => removeVideo(id);
 
     fileName.appendChild(trashIcon);
@@ -47,7 +47,7 @@ videoInput.addEventListener("change", (e) => {
     bottomBar.appendChild(trashIcon);
     videoContainer.appendChild(videoItem);
   });
-  pairSection.style.display = "block";
+  pairSection.style.display = 'block';
 });
 
 // Handle video selection
@@ -60,20 +60,20 @@ function toggleVideoSelection(id) {
   logger.info(`Current selectedVideos:`, selectedVideos);
 
   if (isSelected) {
-    videoItem.classList.add("selected");
-    if (!selectedVideos.some((v) => v.id === id)) {
-      const videoFile = videoFiles.find((v) => v.id === id);
+    videoItem.classList.add('selected');
+    if (!selectedVideos.some(v => v.id === id)) {
+      const videoFile = videoFiles.find(v => v.id === id);
       selectedVideos.push({ id, file: videoFile.file });
     }
   } else {
-    videoItem.classList.remove("selected");
-    selectedVideos = selectedVideos.filter((v) => v.id !== id);
+    videoItem.classList.remove('selected');
+    selectedVideos = selectedVideos.filter(v => v.id !== id);
   }
   logger.info(`Updated selectedVideos:`, selectedVideos);
 }
 
-function drawWaveform(canvas, signal, offset, color = "#4caf50") {
-  const ctx = canvas.getContext("2d");
+function drawWaveform(canvas, signal, offset, color = '#4caf50') {
+  const ctx = canvas.getContext('2d');
   const width = canvas.width;
   const height = canvas.height;
 
@@ -101,7 +101,7 @@ function drawWaveform(canvas, signal, offset, color = "#4caf50") {
   }
 
   // Apply signal enhancement
-  const enhancedSignal = preprocessedSignal.map((sample) => {
+  const enhancedSignal = preprocessedSignal.map(sample => {
     // Normalize to [-1, 1]
     const normalized = sample / maxSample;
     // Apply cubic transformation to enhance peaks
@@ -117,9 +117,7 @@ function drawWaveform(canvas, signal, offset, color = "#4caf50") {
     }
   }
 
-  const normalizedSignal = enhancedSignal.map(
-    (sample) => (sample / newMaxSample) * 0.8,
-  );
+  const normalizedSignal = enhancedSignal.map(sample => (sample / newMaxSample) * 0.8);
 
   // Start drawing the waveform
   ctx.beginPath();
@@ -172,10 +170,7 @@ function estimatePitch(samples, sampleRate) {
   let prevSample = samples[0];
 
   for (let i = 1; i < samples.length; i++) {
-    if (
-      (prevSample < 0 && samples[i] >= 0) ||
-      (prevSample >= 0 && samples[i] < 0)
-    ) {
+    if ((prevSample < 0 && samples[i] >= 0) || (prevSample >= 0 && samples[i] < 0)) {
       zeroCrossings++;
     }
     prevSample = samples[i];
@@ -225,7 +220,7 @@ function findBestCorrelation(points1, points2, maxOffset = 5) {
     for (const point1 of points1) {
       // Find points in the second audio that are close in time (considering the offset)
       const matchingPoints = points2.filter(
-        (point2) => Math.abs(point2.time + offset - point1.time) < 0.1, // 100ms window
+        point2 => Math.abs(point2.time + offset - point1.time) < 0.1, // 100ms window
       );
 
       if (matchingPoints.length > 0) {
@@ -287,14 +282,12 @@ function preprocessSignal(signal) {
   filteredSignal[0] = smoothedSignal[0];
 
   for (let i = 1; i < smoothedSignal.length; i++) {
-    filteredSignal[i] =
-      alpha *
-      (filteredSignal[i - 1] + smoothedSignal[i] - smoothedSignal[i - 1]);
+    filteredSignal[i] = alpha * (filteredSignal[i - 1] + smoothedSignal[i] - smoothedSignal[i - 1]);
   }
 
   // Apply a simple threshold to remove very quiet parts
   const threshold = 0.05; // Reduced from 0.1 to preserve more of the signal
-  const thresholdedSignal = filteredSignal.map((sample) => {
+  const thresholdedSignal = filteredSignal.map(sample => {
     return Math.abs(sample) < threshold ? 0 : sample;
   });
 
@@ -302,16 +295,16 @@ function preprocessSignal(signal) {
 }
 
 // Handle pair videos button click
-pairVideos.addEventListener("click", async () => {
+pairVideos.addEventListener('click', async () => {
   const usedPlaybackRate = playbackRate;
   const usedInvertedPlaybackRate = 1 / usedPlaybackRate;
   const pairId = crypto.randomUUID();
-  logger.info("Pair button clicked");
+  logger.info('Pair button clicked');
 
-  logger.info("Filtered selectedVideos:", selectedVideos);
+  logger.info('Filtered selectedVideos:', selectedVideos);
 
   if (selectedVideos.length !== 2) {
-    alert("Please select exactly 2 videos to pair");
+    alert('Please select exactly 2 videos to pair');
     return;
   }
 
@@ -319,27 +312,27 @@ pairVideos.addEventListener("click", async () => {
   selectedVideos = [];
 
   // Create a new pair card
-  const newPairCard = document.createElement("div");
-  newPairCard.className = "pair-card";
+  const newPairCard = document.createElement('div');
+  newPairCard.className = 'pair-card';
   newPairCard.id = `pair-card-${pairId}`;
 
-  const pairVideosContainer = document.createElement("div");
-  pairVideosContainer.className = "pair-videos";
+  const pairVideosContainer = document.createElement('div');
+  pairVideosContainer.className = 'pair-videos';
   pairVideosContainer.id = `video-pair-${pairId}`;
 
   newPairCard.appendChild(pairVideosContainer);
-  document.getElementById("pairSection").appendChild(newPairCard);
+  document.getElementById('pairSection').appendChild(newPairCard);
 
   // Hide selected videos from upload section
   pairedVideos.forEach(({ id }) => {
     const videoItem = document.getElementById(`video-item-${id}`);
-    videoItem.style.display = "none";
+    videoItem.style.display = 'none';
     // Also uncheck the checkbox and remove selected class
     const checkbox = document.getElementById(`checkbox-${id}`);
     if (checkbox) {
       checkbox.checked = false;
     }
-    videoItem.classList.remove("selected");
+    videoItem.classList.remove('selected');
   });
 
   // Add to processing queue
@@ -347,13 +340,7 @@ pairVideos.addEventListener("click", async () => {
     pairId,
     async () => {
       const processingPromises = pairedVideos.map(({ file, id }) =>
-        processVideo(
-          file,
-          id,
-          pairId,
-          usedPlaybackRate,
-          usedInvertedPlaybackRate,
-        ),
+        processVideo(file, id, pairId, usedPlaybackRate, usedInvertedPlaybackRate),
       );
       await Promise.all(processingPromises);
     },
@@ -365,6 +352,6 @@ pairVideos.addEventListener("click", async () => {
 function removeVideo(id) {
   const videoItem = document.getElementById(`video-item-${id}`);
   videoContainer.removeChild(videoItem);
-  videoFiles = videoFiles.filter((v) => v.id !== id);
-  selectedVideos = selectedVideos.filter((v) => v.id !== id);
+  videoFiles = videoFiles.filter(v => v.id !== id);
+  selectedVideos = selectedVideos.filter(v => v.id !== id);
 }
