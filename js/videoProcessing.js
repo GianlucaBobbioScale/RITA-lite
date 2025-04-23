@@ -302,7 +302,7 @@ async function getFileChecksum(file) {
 }
 
 async function getVideoFPS(file) {
-  return new Promise(async resolve => {
+  return new Promise(async (resolve, reject) => {
     // TODO: enable as fallback if files are not MP4 anymore
     //  const readChunk = async (chunkSize, offset) => {
     //    return new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
@@ -321,6 +321,11 @@ async function getVideoFPS(file) {
         // nb_samples: number of frames in the video
         track.nb_samples / (track.duration / track.timescale),
       );
+    };
+
+    mp4.onError = e => {
+      console.error('MP4Box error:', e);
+      reject(e);
     };
 
     let nextBufferStart = 0;
