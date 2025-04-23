@@ -127,6 +127,7 @@ async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate
       statusLabel.style.color = 'var(--error-color)';
       video.status = 'aborted';
       console.error(`Processing aborted: ${reason}`);
+      video.data.screenshots = [];
       resolve();
       return;
     };
