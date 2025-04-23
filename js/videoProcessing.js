@@ -1,3 +1,8 @@
+let perfMode = false; // false by default
+if (window.location.search.includes('perf')) {
+  perfMode = true;
+}
+
 const videoProcessingVersion = '1.0.1';
 async function addVideoOnQueue(file, id, pairId) {
   const pairContainer = document.getElementById(`video-pair-${pairId}`);
@@ -278,7 +283,7 @@ async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate
                   const seekedTime = seekedEndTime - seekedStartTime;
 
                   currentTime += step;
-                  setTimeout(captureNext, 100); // short delay to avoid overloading
+                  setTimeout(captureNext, perfMode ? 1 : 100); // short delay to avoid overloading
                 },
                 'image/webp',
                 0.6,
