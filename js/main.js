@@ -3,18 +3,18 @@ const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
 const browserLanding = document.getElementById('browserLanding');
 const mainContent = document.getElementById('mainContent');
 
-if (!isFirefox) {
-  browserLanding.style.display = 'flex';
-  mainContent.style.display = 'none';
-  // Prevent any further script execution
-  throw new Error('Browser not supported');
-}
+// if (!isFirefox) {
+//   browserLanding.style.display = 'flex';
+//   mainContent.style.display = 'none';
+//   // Prevent any further script execution
+//   throw new Error('Browser not supported');
+// }
 
-function displayVideoProcessingVersionOnURL() {
-  const url = new URL(window.location.href);
-  url.searchParams.set('videoProcessingVersion', videoProcessingVersion);
-  window.history.replaceState({}, '', url);
-}
+// function displayVideoProcessingVersionOnURL() {
+//   const url = new URL(window.location.href);
+//   url.searchParams.set('videoProcessingVersion', videoProcessingVersion);
+//   window.history.replaceState({}, '', url);
+// }
 
 // Display user specifications
 function displayUserSpecs() {
@@ -42,9 +42,9 @@ function displayUserSpecs() {
   if (gl) {
     const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
     if (debugInfo) {
-      webglInfo = `${gl.getParameter(
-        debugInfo.UNMASKED_VENDOR_WEBGL,
-      )} ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}`;
+      webglInfo = `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} ${gl.getParameter(
+        debugInfo.UNMASKED_RENDERER_WEBGL,
+      )}`;
     }
   }
 
@@ -56,7 +56,6 @@ function displayUserSpecs() {
     <p>CPU: ${cpuCores} cores</p>
     <p>Biggest video size: <span id="biggestVideoSize">${biggetVideosBlobSizes} MB</span></p>
     <p>WebGL: ${webglInfo}</p>
-    <p>VideoProcessingVersion: ${videoProcessingVersion || '1.0.0'}</p>
   `;
 
   userSpecs.innerHTML = specsHTML;
@@ -183,7 +182,7 @@ let pairCount = 0;
 let biggetVideosBlobSizes = 0;
 const videoProcessingQueue = new VideoProcessingQueue(concurrentPairProcessing);
 
-displayVideoProcessingVersionOnURL();
+// displayVideoProcessingVersionOnURL();
 
 // Call the function to display specs
 displayUserSpecs();
