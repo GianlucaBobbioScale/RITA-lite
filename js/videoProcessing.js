@@ -303,13 +303,40 @@ async function getFileChecksum(file) {
 
 async function getVideoFPS(file) {
   return new Promise(async resolve => {
-    const readChunk = async (chunkSize, offset) => {
-      return new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
+    // TODO: enable as fallback if files are not MP4 anymore
+    //  const readChunk = async (chunkSize, offset) => {
+    //    return new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
+    //  };
+    //  MediaInfo.mediaInfoFactory({ format: 'object' }, mediainfo => {
+    //    mediainfo.analyzeData(file.size, readChunk).then(result => {
+    //      resolve(result.media.track[0].FrameRate);
+    //    });
+    //  });
+
+    const mp4 = MP4Box.createFile();
+    mp4.onReady = info => {
+      console.log('onReady', info);
+      const track = info.tracks[0];
+
+      resolve(
+        // nb_samples: number of frames in the video
+        track.nb_samples / (track.duration / track.timescale),
+      );
     };
-    MediaInfo.mediaInfoFactory({ format: 'object' }, mediainfo => {
-      mediainfo.analyzeData(file.size, readChunk).then(result => {
-        resolve(result.media.track[0].FrameRate);
-      });
-    });
+
+    let nextBufferStart = 0;
+
+    // loop until the header has been parsed
+    while (mp4.readySent === false) {
+      const headerBuffer = await file
+        .slice(
+          nextBufferStart,
+          nextBufferStart + 64 * 1024, // 64 KB is usually enough for the header
+        )
+        .arrayBuffer();
+      // @ts-ignore
+      headerBuffer.fileStart = nextBufferStart;
+      nextBufferStart = mp4.appendBuffer(headerBuffer);
+    }
   });
 }
