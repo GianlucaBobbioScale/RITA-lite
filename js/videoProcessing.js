@@ -309,14 +309,36 @@ async function getFileChecksum(file) {
 }
 
 async function getVideoFPS(file) {
-  return new Promise(async resolve => {
-    const readChunk = async (chunkSize, offset) => {
-      return new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
+  return new Promise(async (resolve, reject) => {
+    // NOTE: go back to the MediaInfo solution if files are not MP4 anymore
+
+    const mp4 = MP4Box.createFile();
+    mp4.onReady = info => {
+      const track = info.tracks[0];
+
+      resolve(
+        // nb_samples: number of frames in the video
+        track.nb_samples / (track.duration / track.timescale),
+      );
     };
-    MediaInfo.mediaInfoFactory({ format: 'object' }, mediainfo => {
-      mediainfo.analyzeData(file.size, readChunk).then(result => {
-        resolve(result.media.track[0].FrameRate);
-      });
-    });
+
+    mp4.onError = e => {
+      console.error('MP4Box error:', e);
+      reject(e);
+    };
+
+    let nextBufferStart = 0;
+
+    // loop until the header has been parsed
+    while (mp4.readySent === false) {
+      const headerBuffer = await file
+        .slice(
+          nextBufferStart,
+          nextBufferStart + 64 * 1024, // 64 KB is usually enough for the header
+        )
+        .arrayBuffer();
+      headerBuffer.fileStart = nextBufferStart;
+      nextBufferStart = mp4.appendBuffer(headerBuffer);
+    }
   });
 }
