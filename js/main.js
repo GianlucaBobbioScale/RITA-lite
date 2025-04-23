@@ -10,11 +10,11 @@ const mainContent = document.getElementById('mainContent');
 //   throw new Error('Browser not supported');
 // }
 
-function displayVideoProcessingVersionOnURL() {
-  const url = new URL(window.location.href);
-  url.searchParams.set('videoProcessingVersion', videoProcessingVersion);
-  window.history.replaceState({}, '', url);
-}
+// function displayVideoProcessingVersionOnURL() {
+//   const url = new URL(window.location.href);
+//   url.searchParams.set('videoProcessingVersion', videoProcessingVersion);
+//   window.history.replaceState({}, '', url);
+// }
 
 // Display user specifications
 function displayUserSpecs() {
