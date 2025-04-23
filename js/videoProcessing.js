@@ -303,15 +303,7 @@ async function getFileChecksum(file) {
 
 async function getVideoFPS(file) {
   return new Promise(async (resolve, reject) => {
-    // TODO: enable as fallback if files are not MP4 anymore
-    //  const readChunk = async (chunkSize, offset) => {
-    //    return new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
-    //  };
-    //  MediaInfo.mediaInfoFactory({ format: 'object' }, mediainfo => {
-    //    mediainfo.analyzeData(file.size, readChunk).then(result => {
-    //      resolve(result.media.track[0].FrameRate);
-    //    });
-    //  });
+    // NOTE: go back to the MediaInfo solution if files are not MP4 anymore
 
     const mp4 = MP4Box.createFile();
     mp4.onReady = info => {
@@ -338,7 +330,6 @@ async function getVideoFPS(file) {
           nextBufferStart + 64 * 1024, // 64 KB is usually enough for the header
         )
         .arrayBuffer();
-      // @ts-ignore
       headerBuffer.fileStart = nextBufferStart;
       nextBufferStart = mp4.appendBuffer(headerBuffer);
     }
