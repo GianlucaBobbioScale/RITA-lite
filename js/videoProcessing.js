@@ -315,7 +315,6 @@ async function getVideoFPS(file) {
 
     const mp4 = MP4Box.createFile();
     mp4.onReady = info => {
-      console.log('onReady', info);
       const track = info.tracks[0];
 
       resolve(
