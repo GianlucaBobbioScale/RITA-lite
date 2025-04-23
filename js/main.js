@@ -79,6 +79,7 @@ const concurrentPairProcessing = 2;
 const checkCriterias = {
   fps: 100,
   width: 2944,
+  duration: 30,
 };
 
 // Queue manager for video processing
