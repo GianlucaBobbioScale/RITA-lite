@@ -122,12 +122,12 @@ class VideoProcessingQueue {
           }
           retryButton.textContent = 'Retry Upload';
           retryButton.disabled = false;
-          retryButton.addEventListener('click', () => {
+          retryButton.onclick = () => {
             taskIdElement.textContent = 'Retrying upload...';
             retryButton.textContent = 'Retrying...';
             retryButton.disabled = true;
             window.onRITAVideoProcessed?.(pair);
-          });
+          };
         }
       }
     };
