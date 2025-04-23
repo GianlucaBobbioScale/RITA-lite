@@ -177,7 +177,7 @@ function main() {
     'https://cdn.jsdelivr.net/gh/antimatter15/whammy/whammy.js',
     'https://unpkg.com/mediainfo.js',
   ];
-  let dynamicScripts = ['js/videoProcessing.js', 'js/uiHandlers.js', 'js/main.js', 'js/logger.js'];
+  let dynamicScripts = ['js/logger.js', 'js/videoProcessing.js', 'js/uiHandlers.js', 'js/main.js'];
 
   // if scripts is run locally, use the local scripts
   if (window.location.protocol !== 'file:') {
