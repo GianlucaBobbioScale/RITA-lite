@@ -183,7 +183,7 @@ let pairCount = 0;
 let biggetVideosBlobSizes = 0;
 const videoProcessingQueue = new VideoProcessingQueue(concurrentPairProcessing);
 
-displayVideoProcessingVersionOnURL();
+// displayVideoProcessingVersionOnURL();
 
 // Call the function to display specs
 displayUserSpecs();
