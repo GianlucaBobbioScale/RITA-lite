@@ -42,9 +42,9 @@ function displayUserSpecs() {
   if (gl) {
     const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
     if (debugInfo) {
-      webglInfo = `${gl.getParameter(
-        debugInfo.UNMASKED_VENDOR_WEBGL,
-      )} ${gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)}`;
+      webglInfo = `${gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL)} ${gl.getParameter(
+        debugInfo.UNMASKED_RENDERER_WEBGL,
+      )}`;
     }
   }
 
@@ -56,7 +56,6 @@ function displayUserSpecs() {
     <p>CPU: ${cpuCores} cores</p>
     <p>Biggest video size: <span id="biggestVideoSize">${biggetVideosBlobSizes} MB</span></p>
     <p>WebGL: ${webglInfo}</p>
-    <p>VideoProcessingVersion: ${videoProcessingVersion || '1.0.0'}</p>
   `;
 
   userSpecs.innerHTML = specsHTML;
