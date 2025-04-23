@@ -161,6 +161,13 @@ async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate
         return;
       }
 
+      if (processingVideo.duration <= checkCriterias.duration) {
+        abortProcessing(
+          `Video must be longer than ${checkCriterias.duration} seconds (Found ${processingVideo.duration} seconds).`,
+        );
+        return;
+      }
+
       // Try different codec configurations
       const codecConfigs = [
         { mimeType: 'video/webm;codecs=vp9' },
