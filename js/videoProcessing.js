@@ -46,12 +46,12 @@ async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate
   } catch (err) {
     logger.warn('Wake Lock not available');
   }
-  const video = videoProcessingQueue.allQueue
-    .find(({ pairId: pairIdArg }) => pairIdArg === pairId)
-    .videos.find(({ id: videoId }) => videoId === id);
+  const pair = videoProcessingQueue.allQueue.find(({ pairId: pairIdArg }) => pairIdArg === pairId);
+  const video = pair.videos.find(({ id: videoId }) => videoId === id);
   video.data = video.data || {};
   video.data.checksum = await getFileChecksum(file);
   video.data.screenshots = video.data.screenshots || [];
+
   return new Promise(resolve => {
     let screenshotsSize = 0;
     const pairContainer = document.getElementById(`video-pair-${pairId}`);
@@ -136,6 +136,11 @@ async function processVideo(file, id, pairId, playbackRate, invertedPlaybackRate
       resolve();
       return;
     };
+
+    const siblingVideos = pair.videos.filter(({ id: siblingId }) => siblingId !== id);
+    if (siblingVideos.some(sibling => sibling.data.checksum === video.data.checksum)) {
+      abortProcessing('Duplicated videos');
+    }
 
     // Create hidden video element for processing
     const processingVideo = document.createElement('video');
