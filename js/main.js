@@ -94,9 +94,9 @@ class VideoProcessingQueue {
       const pair = this.allQueue.find(({ pairId }) => pairId === pairIdArg);
       if (pair) {
         pair.videos.forEach(video => {
-          video.status = errorMessage ? 'uploaded-error' : 'uploaded';
+          video.status = taskId ? 'uploaded' : 'uploaded-error';
           logger.info('video to mark as uploaded', video.id, pairIdArg);
-          if (!errorMessage) {
+          if (taskId) {
             updateUpdatedVideo(video.id, pairIdArg);
             // we clean the screenshots array to avoid memory leaks
             video.data.screenshots.length = 0;
